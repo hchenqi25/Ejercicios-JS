@@ -4687,5 +4687,1051 @@ ingresosTotales():
 Devuelve la suma de precio de las reparaciones con estado === "cerrada" (las abiertas aún no cuentan).
 verReparaciones(): devuelve una copia del array (con for of y { ...objeto })
 
+
+
+function crearTaller() {
+    let vehiculos = [];
+    let mecanicos = [];
+    let reparaciones = [];
+    // CORRECCIÓN: renombrado para no confundirlo con el parámetro idReparacion.
+    let siguienteIdReparacion = 1;
+
+    return {
+        agregarVehiculo: function (matricula, modelo) {
+            for (let vehiculo of vehiculos) {
+                if (vehiculo.matricula === matricula) {
+                    // CORRECCIÓN menor: texto exacto del enunciado (con tilde).
+                    return "Matrícula ya registrada";
+                }
+            }
+            vehiculos.push({ id: vehiculos.length + 1, matricula, modelo });
+            return `Vehículo ${matricula} añadido con éxito`;
+        },
+
+        agregarMecanico: function (nombre, especialidad) {
+            mecanicos.push({ id: mecanicos.length + 1, nombre, especialidad, ocupado: false });
+            return `Mecánico ${nombre} agregado con éxito`;
+        },
+
+        abrirReparacion: function (idVehiculo, idMecanico, descripcion, precio) {
+            for (let vehiculo of vehiculos) {
+                if (vehiculo.id === idVehiculo) {
+                    for (let mecanico of mecanicos) {
+                        if (mecanico.id === idMecanico) {
+
+                            // ERROR: `if (mecanico.ocupado === true)` seguía adelante
+                            // justo cuando el mecánico estaba ocupado.
+                            // CORRECCIÓN: si está ocupado, se devuelve el error.
+                            if (mecanico.ocupado) {
+                                return "Mecánico ocupado";
+                            }
+
+                            // ERROR: el `for (let vehiculos of reparaciones)` tapaba el
+                            // array `vehiculos`, usaba propiedades inexistentes
+                            // (`vehiculos.reparaciones`) y, con `reparaciones` vacío,
+                            // nunca se ejecutaba, así que el push no se alcanzaba jamás.
+                            // CORRECCIÓN: bucle usado SOLO para comprobar si el vehículo
+                            // ya tiene una reparación abierta. El push va fuera.
+                            for (let reparacion of reparaciones) {
+                                if (reparacion.idVehiculo === idVehiculo && reparacion.estado === "abierta") {
+                                    return "Vehículo ya en reparación";
+                                }
+                            }
+
+                            // ERROR: `reparaciones.precio > 0` (el array no tiene precio).
+                            // CORRECCIÓN: usar el parámetro `precio`.
+                            if (precio <= 0) {
+                                return "Precio no válido";
+                            }
+
+                            // ERROR: nunca se marcaba al mecánico como ocupado.
+                            // CORRECCIÓN: se hace DESPUÉS de todas las validaciones.
+                            mecanico.ocupado = true;
+
+                            // ERROR: el id no se incrementaba (todas serían la 1).
+                            // CORRECCIÓN: post-incremento del contador.
+                            let id = siguienteIdReparacion++;
+                            reparaciones.push({
+                                idReparacion: id,
+                                idVehiculo: idVehiculo,
+                                idMecanico: idMecanico,
+                                descripcion: descripcion,
+                                precio: precio,
+                                estado: "abierta"
+                            });
+                            return `Reparación ${id} abierta con éxito`;
+                        }
+                    }
+                    // ERROR: faltaban los returns específicos de cada caso
+                    // (todo acababa en "ERROR").
+                    return "Mecánico no encontrado";
+                }
+            }
+            return "Vehículo no encontrado";
+        },
+
+        cerrarReparacion: function (idReparacion) {
+            // ERROR: `reparaciones.length` sin `i <` hacía un bucle infinito.
+            // CORRECCIÓN: `i < reparaciones.length`.
+            for (let i = 0; i < reparaciones.length; i++) {
+                // ERROR: `reparaciones.id` trataba el array como un objeto.
+                // CORRECCIÓN: `reparaciones[i].idReparacion`.
+                if (reparaciones[i].idReparacion === idReparacion) {
+
+                    // ERROR: faltaba el mensaje "Reparación ya cerrada".
+                    if (reparaciones[i].estado === "cerrada") {
+                        return "Reparación ya cerrada";
+                    }
+
+                    // ERROR: escribías "cerrado", pero ingresosTotales busca "cerrada".
+                    // CORRECCIÓN: mismo texto en todos los sitios.
+                    reparaciones[i].estado = "cerrada";
+
+                    // ERROR: recorrías `reparaciones` buscando al mecánico y comparabas
+                    // con el id de la reparación.
+                    // CORRECCIÓN: recorrer `mecanicos` y comparar con el idMecanico
+                    // guardado en la reparación.
+                    for (let mecanico of mecanicos) {
+                        if (mecanico.id === reparaciones[i].idMecanico) {
+                            mecanico.ocupado = false;
+                            return "Reparación cerrada y mecánico liberado";
+                        }
+                    }
+                    return "Reparación cerrada, pero el mecánico ya no existe";
+                }
+            }
+            return "Reparación no encontrada";
+        },
+
+        cancelarReparacion: function (idReparacion) {
+            for (let i = 0; i < reparaciones.length; i++) {
+                // ERROR: `reparaciones.idReparacion` (array, no objeto).
+                if (reparaciones[i].idReparacion === idReparacion) {
+
+                    // ERROR: no comprobabas que estuviera abierta.
+                    if (reparaciones[i].estado !== "abierta") {
+                        return "Solo se pueden cancelar reparaciones abiertas";
+                    }
+
+                    // ERROR: borrabas sin guardar el objeto, y así no podías
+                    // saber qué mecánico había que liberar.
+                    // CORRECCIÓN: guardar el objeto ANTES del splice.
+                    let reparacionActual = reparaciones[i];
+                    reparaciones.splice(i, 1);
+
+                    // ERROR: no se liberaba al mecánico (quedaría bloqueado).
+                    for (let mecanico of mecanicos) {
+                        if (mecanico.id === reparacionActual.idMecanico) {
+                            mecanico.ocupado = false;
+                            return "Reparación cancelada y mecánico liberado";
+                        }
+                    }
+                    return "Reparación cancelada, pero el mecánico ya no existe";
+                }
+            }
+            return "Reparación no encontrada";
+        },
+
+        historialVehiculo: function (matricula) {
+            // ERROR: recorrías vehiculos y metías `vehiculo.descripcion`, que no
+            // existe (las descripciones están en las reparaciones).
+            // CORRECCIÓN: 1) encontrar el vehículo por matrícula,
+            // 2) recorrer reparaciones buscando las de su id.
+            for (let vehiculo of vehiculos) {
+                if (vehiculo.matricula === matricula) {
+                    let descripciones = [];
+                    for (let reparacion of reparaciones) {
+                        if (reparacion.idVehiculo === vehiculo.id) {
+                            descripciones.push(reparacion.descripcion);
+                        }
+                    }
+                    return descripciones;
+                }
+            }
+            return "Vehículo no encontrado";
+        },
+
+        ingresosTotales: function () {
+            let total = 0;
+            // ERROR: el `return total` estaba DENTRO del forEach, así que la función
+            // no devolvía nada.
+            // CORRECCIÓN: for of, y return una sola vez al final.
+            for (let reparacion of reparaciones) {
+                if (reparacion.estado === "cerrada") {
+                    total += reparacion.precio;
+                }
+            }
+            return total;
+        },
+
+        verReparaciones: function () {
+            // ERROR: no devolvía nada y `.map()` sin función da error.
+            // CORRECCIÓN: construir una copia con un bucle y devolverla.
+            let copia = [];
+            for (let reparacion of reparaciones) {
+                copia.push({ ...reparacion });
+            }
+            return copia;
+        }
+    };
+}
+
+// === PRUEBAS ===
+const taller = crearTaller();
+
+console.log(taller.agregarVehiculo("1234ABC", "Seat Ibiza"));
+console.log(taller.agregarVehiculo("5678DEF", "Ford Focus"));
+console.log(taller.agregarVehiculo("1234ABC", "Renault Clio"));   // Matrícula ya registrada
+console.log(taller.agregarMecanico("Carlos", "Motor"));
+console.log(taller.agregarMecanico("Lucía", "Frenos"));
+
+console.log(taller.abrirReparacion(1, 1, "Cambio de aceite", 80));   // éxito, id 1
+console.log(taller.abrirReparacion(2, 1, "Frenos", 120));            // Mecánico ocupado
+console.log(taller.abrirReparacion(1, 2, "Revisión", 50));           // Vehículo ya en reparación
+console.log(taller.abrirReparacion(99, 2, "Revisión", 50));          // Vehículo no encontrado
+console.log(taller.abrirReparacion(2, 99, "Revisión", 50));          // Mecánico no encontrado
+console.log(taller.abrirReparacion(2, 2, "Frenos", 0));              // Precio no válido
+console.log(taller.abrirReparacion(2, 2, "Frenos", 120));            // éxito, id 2
+
+console.log(taller.ingresosTotales());          // 0
+
+console.log(taller.cerrarReparacion(1));        // confirmación
+console.log(taller.cerrarReparacion(1));        // Reparación ya cerrada
+console.log(taller.cerrarReparacion(99));       // Reparación no encontrada
+console.log(taller.ingresosTotales());          // 80
+
+console.log(taller.cancelarReparacion(1));      // Solo se pueden cancelar reparaciones abiertas
+console.log(taller.cancelarReparacion(2));      // confirmación (Lucía queda libre)
+
+console.log(taller.abrirReparacion(1, 1, "Neumáticos", 200));   // éxito, id 3
+console.log(taller.historialVehiculo("1234ABC"));               // ["Cambio de aceite", "Neumáticos"]
+console.log(taller.historialVehiculo("0000XXX"));               // Vehículo no encontrado
+console.log(taller.verReparaciones());
+
  */
 
+/*Ejercicio 40 => Crea una función fábrica crearSupermercado() que encapsule tres arrays privados: productos, clientes y compras. Usa un contador privado para idCompra.
+
+Debe devolver un objeto con ocho métodos:
+
+agregarProducto(nombre, categoria, precio, stock):
+Si ya existe un producto con ese nombre, devuelve "Producto ya registrado" (recorre con for of).
+Si precio <= 0 devuelve "Precio no válido".
+Añade a productos: { id: productos.length + 1, nombre, categoria, precio, stock }.
+Devuelve un string de confirmación.
+agregarCliente(nombre):
+Añade a clientes: { id: clientes.length + 1, nombre, puntos: 0 }.
+Devuelve un string de confirmación.
+comprar(idCliente, idProducto, cantidad):
+Valida que el cliente exista ("Cliente no encontrado") y que el producto exista ("Producto no encontrado").
+Comprueba que cantidad > 0 ("Cantidad no válida").
+Comprueba que stock >= cantidad ("Stock insuficiente").
+Si todo es correcto: resta el stock, calcula total = cantidad * precio, suma al cliente Math.floor(total / 10) puntos y registra en compras { idCompra, idCliente, idProducto, cantidad, total }.
+Devuelve un string de éxito que incluya el id de la compra y el total.
+devolverCompra(idCompra):
+Busca la compra con for i. Si no existe, "Compra no encontrada".
+La borra con .splice(), guarda el objeto temporalmente, devuelve el stock al producto y resta al cliente los puntos que ganó (Math.floor(total / 10)).
+Devuelve confirmación.
+gastoCliente(idCliente):
+Si el cliente no existe, "Cliente no encontrado".
+Devuelve la suma de total de todas sus compras (un número).
+productosPorCategoria(categoria):
+Devuelve un array con copias de los productos de esa categoría (con for of).
+productoMasVendido():
+Recorre compras y suma las cantidades por producto. Devuelve el nombre del producto con más unidades vendidas, o "Sin ventas" si no hay compras.
+verCompras(): devuelve una copia del array (con for of y { ...objeto }).
+
+
+function crearSupermercado() {
+    let productos = [];
+    let clientes = [];
+    let compras = [];
+    let siguienteIdCompra = 1;
+
+    return {
+        agregarProducto: function (nombre, categoria, precio, stock) {
+            for (let producto of productos) {
+                if (producto.nombre === nombre) {
+                    // ERROR: el mensaje no era el del enunciado.
+                    // CORRECCIÓN: texto exacto.
+                    return "Producto ya registrado";
+                }
+                // ERROR: aquí comprobabas `producto.precio` (de un producto ya existente),
+                // y con el array vacío este código nunca se ejecutaba.
+                // CORRECCIÓN: se movió fuera del bucle y usa el parámetro `precio`.
+            }
+            if (precio <= 0) {
+                return "Precio no válido";
+            }
+            productos.push({ id: productos.length + 1, nombre, categoria, precio, stock });
+            // ERROR: imprimías `stock` en lugar de `precio` en el primer hueco.
+            return `Producto ${nombre} añadido con precio ${precio} y stock ${stock}`;
+        },
+
+        agregarCliente: function (nombre) {
+            clientes.push({ id: clientes.length + 1, nombre, puntos: 0 });
+            return `Cliente ${nombre} agregado con éxito`;
+        },
+
+        comprar: function (idCliente, idProducto, cantidad) {
+            for (let cliente of clientes) {
+                if (cliente.id === idCliente) {
+                    for (let producto of productos) {
+                        if (producto.id === idProducto) {
+                            // ERROR: las condiciones estaban anidadas sin return propio,
+                            // así que todos los fallos acababan en "Producto no disponible".
+                            // CORRECCIÓN: un return por cada validación, en orden.
+                            if (cantidad <= 0) {
+                                return "Cantidad no válida";
+                            }
+                            if (producto.stock < cantidad) {
+                                return "Stock insuficiente";
+                            }
+
+                            // ERROR: no se restaba el stock.
+                            producto.stock -= cantidad;
+
+                            let total = cantidad * producto.precio;
+
+                            // ERROR: `Math.floor(total/10);` se calculaba pero no se
+                            // guardaba ni se sumaba al cliente.
+                            // CORRECCIÓN: sumarlo a cliente.puntos.
+                            cliente.puntos += Math.floor(total / 10);
+
+                            let id = siguienteIdCompra++;
+                            compras.push({
+                                idCompra: id,
+                                idCliente: idCliente,
+                                idProducto: idProducto,
+                                cantidad: cantidad,
+                                total: total
+                            });
+                            return `Compra ${id} realizada con éxito. Total: ${total}`;
+                        }
+                    }
+                    // CORRECCIÓN: mensaje propio para producto inexistente.
+                    return "Producto no encontrado";
+                }
+            }
+            // ERROR: aquí devolvías "Producto no disponible" para un cliente inexistente.
+            return "Cliente no encontrado";
+        },
+
+        devolverCompra: function (idCompra) {
+            for (let i = 0; i < compras.length; i++) {
+                if (compras[i].idCompra === idCompra) {
+
+                    // ERROR: `compras[i].idCliente !== idCompra` comparaba un id de
+                    // cliente con un id de compra. No tenía sentido y rechazaba
+                    // devoluciones válidas.
+                    // CORRECCIÓN: eliminado. Si encontramos la compra, se puede devolver.
+
+                    let compraActual = compras[i];
+                    compras.splice(i, 1);
+
+                    // ERROR: `for (let producto of compras)` recorría las compras, y
+                    // `compras.cantidad` trataba el array como un objeto.
+                    // CORRECCIÓN: recorrer `productos` y usar la cantidad del objeto
+                    // guardado antes del splice.
+                    for (let producto of productos) {
+                        if (producto.id === compraActual.idProducto) {
+                            producto.stock += compraActual.cantidad;
+                            break;
+                        }
+                    }
+
+                    // ERROR: no se restaban los puntos al cliente.
+                    // CORRECCIÓN: restar los mismos que se sumaron, calculados con
+                    // el total guardado en la compra.
+                    for (let cliente of clientes) {
+                        if (cliente.id === compraActual.idCliente) {
+                            cliente.puntos -= Math.floor(compraActual.total / 10);
+                            break;
+                        }
+                    }
+
+                    return "Compra devuelta, stock y puntos restaurados";
+                }
+            }
+            // CORRECCIÓN: texto exacto del enunciado.
+            return "Compra no encontrada";
+        },
+
+        gastoCliente: function (idCliente) {
+            for (let cliente of clientes) {
+                if (cliente.id === idCliente) {
+                    let total = 0;
+                    // ERROR: sumabas el precio de todos los productos, que no tiene
+                    // nada que ver con el cliente.
+                    // CORRECCIÓN: recorrer compras y sumar el total de las suyas.
+                    for (let compra of compras) {
+                        if (compra.idCliente === idCliente) {
+                            total += compra.total;
+                        }
+                    }
+                    return total;
+                }
+            }
+            // ERROR: con un cliente inexistente devolvías 0.
+            return "Cliente no encontrado";
+        },
+
+        productosPorCategoria: function (categoria) {
+            let resultado = [];
+            for (let producto of productos) {
+                if (producto.categoria === categoria) {
+                    resultado.push({ ...producto });
+                }
+            }
+            return resultado;
+        },
+
+        productoMasVendido: function () {
+            // ERROR: usabas `stock === 0` como indicador. Un producto agotado no
+            // tiene por qué ser el más vendido, y devolvías el primero que encontrabas.
+            // CORRECCIÓN: sumar las unidades vendidas de cada producto recorriendo
+            // compras, y quedarse con el máximo.
+            let maxUnidades = 0;
+            let nombreMasVendido = "Sin ventas";
+            for (let producto of productos) {
+                let unidades = 0;
+                for (let compra of compras) {
+                    if (compra.idProducto === producto.id) {
+                        unidades += compra.cantidad;
+                    }
+                }
+                if (unidades > maxUnidades) {
+                    maxUnidades = unidades;
+                    nombreMasVendido = producto.nombre;
+                }
+            }
+            return nombreMasVendido;
+        },
+
+        verCompras: function () {
+            let copia = [];
+            for (let compra of compras) {
+                copia.push({ ...compra });
+            }
+            return copia;
+        }
+    };
+}
+
+// === PRUEBAS ===
+const super1 = crearSupermercado();
+
+console.log(super1.agregarProducto("Leche", "Lácteos", 2, 20));
+console.log(super1.agregarProducto("Pan", "Panadería", 1, 30));
+console.log(super1.agregarProducto("Queso", "Lácteos", 8, 5));
+console.log(super1.agregarProducto("Leche", "Lácteos", 2, 10));   // Producto ya registrado
+console.log(super1.agregarProducto("Agua", "Bebidas", 0, 10));    // Precio no válido
+console.log(super1.agregarCliente("Ana"));
+console.log(super1.agregarCliente("Luis"));
+
+console.log(super1.comprar(1, 3, 3));     // éxito, id 1, total 24
+console.log(super1.comprar(1, 3, 5));     // Stock insuficiente
+console.log(super1.comprar(1, 1, 0));     // Cantidad no válida
+console.log(super1.comprar(99, 1, 1));    // Cliente no encontrado
+console.log(super1.comprar(1, 99, 1));    // Producto no encontrado
+console.log(super1.comprar(2, 1, 10));    // éxito, id 2, total 20
+console.log(super1.comprar(2, 2, 5));     // éxito, id 3, total 5
+
+console.log(super1.gastoCliente(1));      // 24
+console.log(super1.gastoCliente(2));      // 25
+console.log(super1.gastoCliente(99));     // Cliente no encontrado
+
+console.log(super1.productosPorCategoria("Lácteos"));   // Leche (stock 10) y Queso (stock 2)
+console.log(super1.productoMasVendido());               // Leche
+
+console.log(super1.devolverCompra(2));    // confirmación
+console.log(super1.devolverCompra(99));   // Compra no encontrada
+console.log(super1.productoMasVendido()); // Pan (5 unidades)
+
+console.log(super1.comprar(1, 2, 1));     // éxito, id 4
+console.log(super1.verCompras());
+
+ */
+
+/*Ejercicio 41 => Crea una función fábrica crearEscuela() que encapsule tres arrays privados: alumnos, asignaturas y matriculas. Usa un contador privado para idMatricula.
+
+Debe devolver un objeto con ocho métodos:
+
+agregarAlumno(nombre, edad):
+Si edad < 16, devuelve "Edad no válida".
+Añade a alumnos: { id: alumnos.length + 1, nombre, edad }.
+Devuelve un string de confirmación.
+agregarAsignatura(nombre, plazas):
+Si ya existe una asignatura con ese nombre, devuelve "Asignatura ya registrada" (recorre con for of).
+Si plazas <= 0, devuelve "Plazas no válidas".
+Añade a asignaturas: { id: asignaturas.length + 1, nombre, plazas }.
+Devuelve un string de confirmación.
+matricular(idAlumno, idAsignatura):
+Valida que el alumno exista ("Alumno no encontrado") y que la asignatura exista ("Asignatura no encontrada").
+Comprueba que queden plazas ("Asignatura completa").
+Comprueba que el alumno no esté ya matriculado en esa asignatura ("Alumno ya matriculado"). Recorre matriculas.
+Si todo es correcto: resta una plaza y registra en matriculas { idMatricula, idAlumno, idAsignatura, nota: null }.
+Devuelve un string de éxito que incluya el id de la matrícula.
+ponerNota(idMatricula, nota):
+Si la matrícula no existe, "Matrícula no encontrada".
+Si nota < 0 o nota > 10, "Nota no válida".
+Asigna la nota a la matrícula y devuelve confirmación.
+anularMatricula(idMatricula):
+Busca con for i. Si no existe, "Matrícula no encontrada".
+Si ya tiene nota (nota !== null), "No se puede anular: ya tiene nota".
+La borra con .splice(), guarda el objeto temporalmente y devuelve la plaza a la asignatura.
+notaMedia(idAlumno):
+Si el alumno no existe, "Alumno no encontrado".
+Devuelve la media de las notas de sus matrículas que tengan nota (ignora las que son null). Si no tiene ninguna, devuelve "Sin notas".
+Usa 3 decimales: Number(media.toFixed(3)).
+aprobadosDeAsignatura(idAsignatura):
+Devuelve un array con los nombres de los alumnos con nota >= 5 en esa asignatura (cruza matriculas con alumnos).
+verMatriculas(): devuelve una copia del array (con for of y { ...objeto }).
+
+
+
+function crearEscuela() {
+    let alumnos = [];
+    let asignaturas = [];
+    let matriculas = [];
+    // CORRECCIÓN: nombre más claro para el contador.
+    let siguienteIdMatricula = 1;
+
+    return {
+        agregarAlumno: function (nombre, edad) {
+            // ERROR: la validación estaba dentro de un `for` sobre alumnos.
+            // Con el array vacío no se ejecutaba y se registraba a un menor.
+            // CORRECCIÓN: sin bucle, se comprueba el parámetro directamente.
+            if (edad < 16) {
+                return "Edad no válida";
+            }
+            alumnos.push({ id: alumnos.length + 1, nombre, edad });
+            return `Alumno ${nombre}, edad ${edad}, agregado con éxito`;
+        },
+
+        agregarAsignatura: function (nombre, plazas) {
+            for (let asignatura of asignaturas) {
+                if (asignatura.nombre === nombre) {
+                    return "Asignatura ya registrada";
+                }
+            }
+            if (plazas <= 0) {
+                // CORRECCIÓN menor: texto con tilde, como el enunciado.
+                return "Plazas no válidas";
+            }
+            asignaturas.push({ id: asignaturas.length + 1, nombre, plazas });
+            return `Asignatura ${nombre} con plazas para ${plazas} personas`;
+        },
+
+        matricular: function (idAlumno, idAsignatura) {
+            for (let alumno of alumnos) {
+                // ERROR: `alumno.idAlumno` no existe; la propiedad es `id`.
+                if (alumno.id === idAlumno) {
+                    for (let asignatura of asignaturas) {
+                        if (asignatura.id === idAsignatura) {
+
+                            // ERROR: si no quedaban plazas no había return propio y
+                            // salía "No se encuentra asignatura".
+                            // CORRECCIÓN: return propio.
+                            if (asignatura.plazas <= 0) {
+                                return "Asignatura completa";
+                            }
+
+                            // ERROR: `matricula.idAlumno !== idAsignatura` comparaba un
+                            // alumno con una asignatura, y con matriculas vacío el bucle
+                            // no se ejecutaba, así que nunca se matriculaba a nadie.
+                            // CORRECCIÓN: bucle SOLO para detectar duplicados (mismo
+                            // alumno Y misma asignatura). El push va fuera.
+                            for (let matricula of matriculas) {
+                                if (matricula.idAlumno === idAlumno && matricula.idAsignatura === idAsignatura) {
+                                    return "Alumno ya matriculado";
+                                }
+                            }
+
+                            asignatura.plazas--;
+                            let id = siguienteIdMatricula++;
+                            matriculas.push({ idMatricula: id, idAlumno: idAlumno, idAsignatura: idAsignatura, nota: null });
+                            return `Matrícula realizada con éxito (id ${id})`;
+                        }
+                    }
+                    return "Asignatura no encontrada";
+                }
+            }
+            return "Alumno no encontrado";
+        },
+
+        ponerNota: function (idMatricula, nota) {
+            for (let matricula of matriculas) {
+                // ERROR: `matricula.id` no existe; la propiedad es `idMatricula`.
+                if (matricula.idMatricula === idMatricula) {
+                    // ERROR: recorrías asignaturas y comprobabas `asignatura.nota`,
+                    // que no existe. La nota es el parámetro.
+                    // CORRECCIÓN: validar el parámetro directamente, sin bucle.
+                    if (nota < 0 || nota > 10) {
+                        return "Nota no válida";
+                    }
+                    matricula.nota = nota;
+                    return `Nota ${nota} asignada a la matrícula ${idMatricula}`;
+                }
+            }
+            return "Matrícula no encontrada";
+        },
+
+        anularMatricula: function (idMatricula) {
+            for (let i = 0; i < matriculas.length; i++) {
+                if (matriculas[i].idMatricula === idMatricula) {
+
+                    // ERROR: `matriculas.nota` trataba el array como un objeto.
+                    // CORRECCIÓN: `matriculas[i].nota`, y `!== null` (un 0 es nota válida).
+                    if (matriculas[i].nota !== null) {
+                        // CORRECCIÓN: sin el punto final del enunciado.
+                        return "No se puede anular: ya tiene nota";
+                    }
+
+                    let matriculaActual = matriculas[i];
+                    matriculas.splice(i, 1);
+
+                    // ERROR: `for (let asignatura of asignatura)` lanzaba un
+                    // ReferenceError (recorrías la variable que estabas declarando).
+                    // CORRECCIÓN: recorrer `asignaturas`.
+                    for (let asignatura of asignaturas) {
+                        // ERROR: comparabas con `idMatricula` en vez de `idAsignatura`.
+                        if (asignatura.id === matriculaActual.idAsignatura) {
+                            asignatura.plazas++;
+                            break;
+                        }
+                    }
+                    return "Matrícula anulada y plaza restaurada";
+                }
+            }
+            return "Matrícula no encontrada";
+        },
+
+        notaMedia: function (idAlumno) {
+            for (let alumno of alumnos) {
+                // ERROR: `alumno.idAlumno` no existe; es `id`.
+                if (alumno.id === idAlumno) {
+                    let suma = 0;
+                    let contador = 0;
+
+                    // ERROR: `for (alumno of asignaturas)` sin `let` reasignaba `alumno`
+                    // y recorría asignaturas, que no tienen nota.
+                    // CORRECCIÓN: `for (let matricula of matriculas)`, solo las del
+                    // alumno que tengan nota (null se ignora).
+                    for (let matricula of matriculas) {
+                        if (matricula.idAlumno === idAlumno && matricula.nota !== null) {
+                            suma += matricula.nota;
+                            contador++;
+                        }
+                    }
+
+                    // ERROR: devolvías dentro del bucle y dividías entre
+                    // asignaturas.length.
+                    // CORRECCIÓN: acumular suma y contador, y dividir DESPUÉS del bucle,
+                    // solo si hay notas.
+                    if (contador === 0) {
+                        return "Sin notas";
+                    }
+                    return Number((suma / contador).toFixed(3));
+                }
+            }
+            return "Alumno no encontrado";
+        },
+
+        aprobadosDeAsignatura: function (idAsignatura) {
+            let aprobados = [];
+            // ERROR: `for (let matriculas of alumnos)` pisaba el array `matriculas`,
+            // comparaba idAlumno con idAsignatura y usaba `asignaturas.nota`.
+            // CORRECCIÓN: recorrer matrículas de esa asignatura con nota >= 5
+            // y cruzar con alumnos para sacar el nombre.
+            for (let matricula of matriculas) {
+                if (matricula.idAsignatura === idAsignatura && matricula.nota !== null && matricula.nota >= 5) {
+                    for (let alumno of alumnos) {
+                        if (alumno.id === matricula.idAlumno) {
+                            aprobados.push(alumno.nombre);
+                            break;
+                        }
+                    }
+                }
+            }
+            // ERROR: devolvías un string y dentro del bucle.
+            // CORRECCIÓN: return al final; si no hay aprobados sale [].
+            return aprobados;
+        },
+
+        verMatriculas: function () {
+            let copia = [];
+            for (let matricula of matriculas) {
+                // ERROR: `push(...matricula)` hace spread de un objeto y da error.
+                // CORRECCIÓN: `{ ...matricula }` copia el objeto.
+                copia.push({ ...matricula });
+            }
+            return copia;
+        }
+    };
+}
+
+// === PRUEBAS ===
+const escuela = crearEscuela();
+
+console.log(escuela.agregarAlumno("Ana", 17));
+console.log(escuela.agregarAlumno("Luis", 18));
+console.log(escuela.agregarAlumno("Eva", 15));                 // Edad no válida
+console.log(escuela.agregarAsignatura("Programación", 2));
+console.log(escuela.agregarAsignatura("Bases de datos", 1));
+console.log(escuela.agregarAsignatura("Programación", 5));     // Asignatura ya registrada
+console.log(escuela.agregarAsignatura("Redes", 0));            // Plazas no válidas
+
+console.log(escuela.matricular(1, 1));     // éxito, id 1
+console.log(escuela.matricular(1, 1));     // Alumno ya matriculado
+console.log(escuela.matricular(1, 2));     // éxito, id 2
+console.log(escuela.matricular(2, 2));     // Asignatura completa
+console.log(escuela.matricular(2, 1));     // éxito, id 3
+console.log(escuela.matricular(99, 1));    // Alumno no encontrado
+console.log(escuela.matricular(1, 99));    // Asignatura no encontrada
+
+console.log(escuela.notaMedia(1));         // Sin notas
+
+console.log(escuela.ponerNota(1, 7.5));    // confirmación
+console.log(escuela.ponerNota(2, 4));      // confirmación
+console.log(escuela.ponerNota(3, 11));     // Nota no válida
+console.log(escuela.ponerNota(99, 5));     // Matrícula no encontrada
+console.log(escuela.ponerNota(3, 5));      // confirmación
+
+console.log(escuela.notaMedia(1));         // 5.75 (Number quita el ceros finales)
+console.log(escuela.notaMedia(99));        // Alumno no encontrado
+
+console.log(escuela.aprobadosDeAsignatura(1));   // ["Ana", "Luis"]
+console.log(escuela.aprobadosDeAsignatura(2));   // []
+
+console.log(escuela.anularMatricula(1));   // No se puede anular: ya tiene nota
+console.log(escuela.anularMatricula(99));  // Matrícula no encontrada
+console.log(escuela.matricular(1, 1));     // Asignatura completa (ver nota abajo)
+
+console.log(escuela.verMatriculas());
+
+ */
+
+/*Ejercicio 42 => agregarCoche(matricula, modelo, precioDia):
+Si ya existe un coche con esa matrícula, devuelve "Matrícula ya registrada" (recorre con for of).
+Si precioDia <= 0, devuelve "Precio no válido".
+Añade a coches: { id: coches.length + 1, matricula, modelo, precioDia, disponible: true }.
+Devuelve un string de confirmación.
+agregarCliente(nombre, edad):
+Si edad < 18, devuelve "Cliente menor de edad".
+Añade a clientes: { id: clientes.length + 1, nombre, edad }.
+Devuelve un string de confirmación.
+alquilar(idCliente, idCoche, dias):
+Valida que el cliente exista ("Cliente no encontrado") y que el coche exista ("Coche no encontrado").
+Comprueba que dias > 0 ("Días no válidos").
+Comprueba que el coche esté disponible ("Coche no disponible").
+Comprueba que el cliente no tenga ya un alquiler con estado === "activo" ("Cliente ya tiene un alquiler activo"). Recorre alquileres.
+Si todo es correcto: pone disponible = false y registra en alquileres { idAlquiler, idCliente, idCoche, dias, total: dias * precioDia, estado: "activo" }.
+Devuelve un string de éxito que incluya el id del alquiler y el total.
+devolverCoche(idAlquiler, diasReales):
+Busca el alquiler con for i. Si no existe, "Alquiler no encontrado".
+Si estado !== "activo", "Alquiler ya finalizado".
+Calcula los días extra: extra = diasReales - dias (si sale negativo, es 0). El total final es diasReales * precioDia + extra * precioDia * 0.5 (los días extra llevan un 50% de recargo).
+Actualiza total del alquiler, pone estado = "finalizado" y deja el coche disponible = true.
+Devuelve un string que incluya el total final.
+cancelarAlquiler(idAlquiler):
+Solo si está "activo" (si no, "Solo se pueden cancelar alquileres activos").
+Lo borra con .splice(), guarda el objeto temporalmente y libera el coche.
+Si no existe, "Alquiler no encontrado".
+cochesDisponibles(): devuelve un array con copias de los coches con disponible === true.
+ingresosTotales(): devuelve la suma de total de los alquileres "finalizado" (los activos aún no cuentan).
+clienteMasGasta():
+Para cada cliente, suma el total de sus alquileres finalizados.
+Devuelve el nombre del que más ha gastado, o "Sin alquileres" si no hay ninguno finalizado.
+verAlquileres(): devuelve una copia del array (con for of y { ...objeto }).
+
+
+
+function crearAlquiler() {
+    let coches = [];
+    let clientes = [];
+    let alquileres = [];
+    let siguienteIdAlquiler = 1;
+
+    return {
+        agregarCoche: function (matricula, modelo, precioDia) {
+            // Duplicado: compara el dato nuevo con los guardados -> bucle
+            for (let coche of coches) {
+                if (coche.matricula === matricula) {
+                    return "Matrícula ya registrada";
+                }
+            }
+            // Precio: solo mira el parámetro -> sin bucle
+            if (precioDia <= 0) {
+                return "Precio no válido";
+            }
+            coches.push({ id: coches.length + 1, matricula, modelo, precioDia, disponible: true });
+            return `Coche ${modelo} con matrícula ${matricula} añadido con éxito`;
+        },
+
+        agregarCliente: function (nombre, edad) {
+            // Edad: solo mira el parámetro -> sin bucle
+            if (edad < 18) {
+                return "Cliente menor de edad";
+            }
+            clientes.push({ id: clientes.length + 1, nombre, edad });
+            return `Cliente ${nombre} agregado con éxito`;
+        },
+
+        alquilar: function (idCliente, idCoche, dias) {
+            for (let cliente of clientes) {
+                if (cliente.id === idCliente) {
+                    for (let coche of coches) {
+                        if (coche.id === idCoche) {
+                            if (dias <= 0) {
+                                return "Días no válidos";
+                            }
+                            if (!coche.disponible) {
+                                return "Coche no disponible";
+                            }
+                            for (let alquiler of alquileres) {
+                                if (alquiler.idCliente === idCliente && alquiler.estado === "activo") {
+                                    return "Cliente ya tiene un alquiler activo";
+                                }
+                            }
+                            coche.disponible = false;
+                            let id = siguienteIdAlquiler++;
+                            let total = dias * coche.precioDia;
+                            alquileres.push({
+                                idAlquiler: id,
+                                idCliente: idCliente,
+                                idCoche: idCoche,
+                                dias: dias,
+                                total: total,
+                                estado: "activo"
+                            });
+                            return `Alquiler ${id} realizado con éxito. Total: ${total}`;
+                        }
+                    }
+                    return "Coche no encontrado";
+                }
+            }
+            return "Cliente no encontrado";
+        },
+
+        devolverCoche: function (idAlquiler, diasReales) {
+            for (let i = 0; i < alquileres.length; i++) {
+                if (alquileres[i].idAlquiler === idAlquiler) {
+                    if (alquileres[i].estado !== "activo") {
+                        return "Alquiler ya finalizado";
+                    }
+                    for (let coche of coches) {
+                        if (coche.id === alquileres[i].idCoche) {
+                            let extra = diasReales - alquileres[i].dias;
+                            if (extra < 0) {
+                                extra = 0;
+                            }
+                            let totalFinal = diasReales * coche.precioDia + extra * coche.precioDia * 0.5;
+                            alquileres[i].total = totalFinal;
+                            alquileres[i].estado = "finalizado";
+                            coche.disponible = true;
+                            return `Coche devuelto. Total final: ${totalFinal}`;
+                        }
+                    }
+                    return "Coche no encontrado";
+                }
+            }
+            return "Alquiler no encontrado";
+        },
+
+        cancelarAlquiler: function (idAlquiler) {
+            for (let i = 0; i < alquileres.length; i++) {
+                if (alquileres[i].idAlquiler === idAlquiler) {
+                    if (alquileres[i].estado !== "activo") {
+                        return "Solo se pueden cancelar alquileres activos";
+                    }
+                    let alquilerActual = alquileres[i];
+                    alquileres.splice(i, 1);
+                    for (let coche of coches) {
+                        if (coche.id === alquilerActual.idCoche) {
+                            coche.disponible = true;
+                            return "Alquiler cancelado y coche liberado";
+                        }
+                    }
+                    return "Alquiler cancelado, pero el coche ya no existe";
+                }
+            }
+            return "Alquiler no encontrado";
+        },
+
+        cochesDisponibles: function () {
+            let resultado = [];
+            for (let coche of coches) {
+                if (coche.disponible === true) {
+                    resultado.push({ ...coche });
+                }
+            }
+            return resultado;
+        },
+
+        ingresosTotales: function () {
+            let total = 0;
+            for (let alquiler of alquileres) {
+                if (alquiler.estado === "finalizado") {
+                    total += alquiler.total;
+                }
+            }
+            return total;
+        },
+
+        clienteMasGasta: function () {
+            let maximo = 0;
+            let nombre = "Sin alquileres";
+            for (let cliente of clientes) {
+                let gastado = 0;
+                for (let alquiler of alquileres) {
+                    if (alquiler.idCliente === cliente.id && alquiler.estado === "finalizado") {
+                        gastado += alquiler.total;
+                    }
+                }
+                if (gastado > maximo) {
+                    maximo = gastado;
+                    nombre = cliente.nombre;
+                }
+            }
+            return nombre;
+        },
+
+        verAlquileres: function () {
+            let copia = [];
+            for (let alquiler of alquileres) {
+                copia.push({ ...alquiler });
+            }
+            return copia;
+        }
+    };
+}
+
+// === PRUEBAS ===
+const alquiler = crearAlquiler();
+
+console.log(alquiler.agregarCoche("1111AAA", "Seat Ibiza", 30));
+console.log(alquiler.agregarCoche("2222BBB", "Ford Focus", 40));
+console.log(alquiler.agregarCoche("3333CCC", "Audi A3", 70));
+console.log(alquiler.agregarCoche("1111AAA", "Renault Clio", 25));   // Matrícula ya registrada
+console.log(alquiler.agregarCoche("4444DDD", "Fiat 500", 0));        // Precio no válido
+console.log(alquiler.agregarCliente("Ana", 25));
+console.log(alquiler.agregarCliente("Luis", 30));
+console.log(alquiler.agregarCliente("Eva", 17));                     // Cliente menor de edad
+
+console.log(alquiler.alquilar(1, 1, 3));      // éxito, id 1, total 90
+console.log(alquiler.alquilar(2, 1, 2));      // Coche no disponible
+console.log(alquiler.alquilar(1, 2, 2));      // Cliente ya tiene un alquiler activo
+console.log(alquiler.alquilar(2, 2, 0));      // Días no válidos
+console.log(alquiler.alquilar(99, 1, 1));     // Cliente no encontrado
+console.log(alquiler.alquilar(2, 99, 1));     // Coche no encontrado
+console.log(alquiler.alquilar(2, 2, 4));      // éxito, id 2, total 160
+
+console.log(alquiler.cochesDisponibles());    // solo el Audi A3
+
+console.log(alquiler.devolverCoche(1, 5));    // total final 180
+console.log(alquiler.devolverCoche(1, 5));    // Alquiler ya finalizado
+console.log(alquiler.devolverCoche(2, 3));    // total final 120
+console.log(alquiler.devolverCoche(99, 1));   // Alquiler no encontrado
+
+console.log(alquiler.ingresosTotales());      // 300
+console.log(alquiler.clienteMasGasta());      // Ana
+
+console.log(alquiler.cancelarAlquiler(1));    // Solo se pueden cancelar alquileres activos
+console.log(alquiler.alquilar(1, 3, 2));      // éxito, id 3, total 140
+console.log(alquiler.cancelarAlquiler(3));    // confirmación
+console.log(alquiler.cancelarAlquiler(99));   // Alquiler no encontrado
+console.log(alquiler.alquilar(2, 3, 1));      // éxito, id 4, total 70
+
+console.log(alquiler.verAlquileres());
+
+ */
+
+
+/*####################EJERCICIOS PROTOTYPE########################### */
+/*Ejercicio 1 => Es un ejercicio sencillo para practicar el molde con this y prototype. Sin validaciones complicadas: solo un array y cuatro métodos.
+
+Crea una función constructora ListaTareas() (con mayúscula, se usa con new).
+
+En el constructor (con this.):
+
+this.tareas = []; (el array de tareas)
+this.siguienteId = 1; (contador para los ids)
+
+En el prototype, estos cuatro métodos:
+
+agregar(titulo):
+Añade a this.tareas: { id: this.siguienteId++, titulo: titulo, hecha: false }.
+Devuelve un string de confirmación.
+completar(id):
+Busca la tarea con for of.
+Si la encuentra, pone hecha = true y devuelve "Tarea completada".
+Si no, devuelve "Tarea no encontrada".
+eliminar(id):
+Busca la tarea con for i, la borra con .splice() y devuelve "Tarea eliminada".
+Si no existe, devuelve "Tarea no encontrada".
+pendientes():
+Devuelve un array con copias ({ ...tarea }) de las tareas con hecha === false.
+
+ 
+
+function ListaTareas() {
+    this.tareas = [];
+    this.siguienteId = 1;
+}
+
+ListaTareas.prototype.agregar = function (titulo) {
+    this.tareas.push({ id: this.siguienteId++, titulo: titulo, hecha: false });
+    return `Tarea "${titulo}" añadida con éxito`;
+};
+
+ListaTareas.prototype.completar = function (id) {
+    for (let tarea of this.tareas) {
+        if (tarea.id === id) {
+            tarea.hecha = true;
+            return "Tarea completada";
+        }
+    }
+    return "Tarea no encontrada";
+};
+
+ListaTareas.prototype.eliminar = function (id) {
+    for (let i = 0; i < this.tareas.length; i++) {
+        if (this.tareas[i].id === id) {
+            this.tareas.splice(i, 1);
+            return "Tarea eliminada";
+        }
+    }
+    return "Tarea no encontrada";
+};
+
+ListaTareas.prototype.pendientes = function () {
+    let resultado = [];
+    for (let tarea of this.tareas) {
+        if (tarea.hecha === false) {
+            resultado.push({ ...tarea });
+        }
+    }
+    return resultado;
+};
+
+// === PRUEBAS ===
+const lista = new ListaTareas();
+
+console.log(lista.agregar("Estudiar prototype"));
+console.log(lista.agregar("Hacer la compra"));
+console.log(lista.agregar("Llamar al médico"));
+
+console.log(lista.completar(1));      // Tarea completada
+console.log(lista.completar(99));     // Tarea no encontrada
+
+console.log(lista.pendientes());      // tareas 2 y 3
+
+console.log(lista.eliminar(2));       // Tarea eliminada
+console.log(lista.eliminar(99));      // Tarea no encontrada
+
+console.log(lista.pendientes());      // solo la tarea 3
+
+console.log(lista.agregar("Nueva"));  // id 4
+console.log(lista.pendientes());      // tareas 3 y 4
+*/
