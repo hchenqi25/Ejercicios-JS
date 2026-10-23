@@ -5734,4 +5734,1489 @@ console.log(lista.pendientes());      // solo la tarea 3
 
 console.log(lista.agregar("Nueva"));  // id 4
 console.log(lista.pendientes());      // tareas 3 y 4
+
+
+/*Ejercicio 2=> Un poco más que la lista de tareas: ahora hay validaciones (que ya conoces de las funciones fábrica) y un método que usa a otro.
+
+Crea una función constructora CuentaBancaria(titular, saldoInicial) (se usa con new).
+
+En el constructor (con this.):
+
+this.titular = titular;
+this.saldo = saldoInicial;
+this.movimientos = [];
+this.siguienteId = 1;
+
+En el prototype, estos cinco métodos:
+
+ingresar(cantidad):
+Si cantidad <= 0, devuelve "Cantidad no válida".
+Suma la cantidad a this.saldo y registra en this.movimientos { id: this.siguienteId++, tipo: "ingreso", cantidad: cantidad }.
+Devuelve un string con el nuevo saldo.
+retirar(cantidad):
+Si cantidad <= 0, devuelve "Cantidad no válida".
+Si cantidad > this.saldo, devuelve "Saldo insuficiente".
+Resta la cantidad y registra un movimiento de tipo "retirada".
+Devuelve un string con el nuevo saldo.
+consultarSaldo():
+Devuelve this.saldo.
+verMovimientos():
+Devuelve un array con copias ({ ...movimiento }) de los movimientos.
+totalIngresado():
+Recorre this.movimientos con for of y devuelve la suma de las cantidades de los movimientos de tipo "ingreso".
+
+
+
+function CuentaBancaria(titular,saldoInicial){
+    this.titular = titular;
+    this.saldo = saldoInicial;
+    this.movimientos = [];
+    this.siguienteId = 1;
+}
+CuentaBancaria.prototype.ingresar = function(cantidad){
+    if(cantidad <=0){
+        return "Cantidad no valida";
+    }else {
+        this.saldo += cantidad;
+        this.movimientos.push({ id: this.siguienteId++, tipo: "ingreso", cantidad: cantidad })
+        return `Ingreso realizado con éxito => saldo => ${this.saldo}`;
+    }
+};
+CuentaBancaria.prototype.retirar = function (cantidad) {
+    if (cantidad <= 0) {
+        return "Cantidad no válida";
+    }
+    if (cantidad > this.saldo) {
+        return "Saldo insuficiente";
+    }
+    this.saldo -= cantidad;
+    this.movimientos.push({ id: this.siguienteId++, tipo: "retirada", cantidad: cantidad });
+    return `Retirada realizada con éxito. Saldo: ${this.saldo}`;
+};
+
+CuentaBancaria.prototype.consultarSaldo = function () {
+    return this.saldo;
+};
+CuentaBancaria.prototype.verMovimientos= function(){
+    return this.movimientos;
+};
+CuentaBancaria.prototype.totalIngresado = function(){
+    let contador =0;
+    for (let movimiento of this.movimientos) {
+        if(movimiento.tipo ==="ingreso"){
+            contador += movimiento.cantidad;
+        }
+    }return contador;
+}
+const cuenta = new CuentaBancaria("Ana", 100);
+
+console.log(cuenta.ingresar(50));      // saldo 150
+console.log(cuenta.ingresar(0));       // Cantidad no válida
+console.log(cuenta.retirar(30));       // saldo 120
+console.log(cuenta.retirar(500));      // Saldo insuficiente
+console.log(cuenta.retirar(-5));       // Cantidad no válida
+
+console.log(cuenta.consultarSaldo());  // 120
+console.log(cuenta.totalIngresado());  // 50
+
+console.log(cuenta.ingresar(10));      // saldo 130
+console.log(cuenta.verMovimientos());  // 3 movimientos (ids 1, 2 y 3)
+
+const otra = new CuentaBancaria("Luis", 0);
+console.log(otra.consultarSaldo());    // 0 (cada cuenta tiene su saldo)
+console.log(otra.verMovimientos());    // [] (y sus propios movimientos)
+
+ */
+
+/*Ejercicio 3 => En el constructor (con this.):
+
+this.productos = [];
+this.siguienteId = 1;
+
+En el prototype, estos seis métodos:
+
+agregarProducto(nombre, precio, stock):
+Si ya existe un producto con ese nombre, devuelve "Producto ya registrado" (recorre con for of).
+Si precio <= 0, devuelve "Precio no válido".
+Si stock < 0, devuelve "Stock no válido".
+Añade a this.productos: { id: this.siguienteId++, nombre, precio, stock }.
+Devuelve un string de confirmación.
+buscar(id):
+Recorre this.productos con for of.
+Devuelve el objeto producto si lo encuentra, o null si no.
+vender(id, cantidad):
+Si cantidad <= 0, devuelve "Cantidad no válida".
+Usa this.buscar(id). Si devuelve null, devuelve "Producto no encontrado".
+Si stock < cantidad, devuelve "Stock insuficiente".
+Resta el stock y devuelve un string con el total (cantidad * precio).
+reponer(id, cantidad):
+Si cantidad <= 0, devuelve "Cantidad no válida".
+Usa this.buscar(id). Si es null, "Producto no encontrado".
+Suma la cantidad al stock y devuelve confirmación.
+eliminar(id):
+Busca con for i, borra con .splice() y devuelve "Producto eliminado".
+Si no existe, "Producto no encontrado".
+valorInventario():
+Devuelve la suma de precio * stock de todos los productos.
+Pruebas
+javascript
+const inv = new Inventario();
+
+console.log(inv.agregarProducto("Teclado", 25, 10));   // confirmación
+console.log(inv.agregarProducto("Ratón", 15, 5));      // confirmación
+console.log(inv.agregarProducto("Teclado", 30, 2));    // Producto ya registrado
+console.log(inv.agregarProducto("Monitor", 0, 3));     // Precio no válido
+console.log(inv.agregarProducto("Cable", 5, -1));      // Stock no válido
+
+console.log(inv.buscar(1));                            // objeto Teclado
+console.log(inv.buscar(99));                           // null
+
+console.log(inv.vender(1, 4));                         // total 100
+console.log(inv.vender(1, 20));                        // Stock insuficiente
+console.log(inv.vender(1, 0));                         // Cantidad no válida
+console.log(inv.vender(99, 1));                        // Producto no encontrado
+
+console.log(inv.reponer(2, 10));                       // confirmación (Ratón: 15)
+console.log(inv.reponer(99, 1));                       // Producto no encontrado
+
+console.log(inv.valorInventario());                    // 25*6 + 15*15 = 375
+
+console.log(inv.eliminar(1));                          // Producto eliminado
+console.log(inv.eliminar(99));                         // Producto no encontrado
+console.log(inv.valorInventario());                    // 225
+
+console.log(inv.agregarProducto("Webcam", 40, 2));     // id 3 (no repite ids)
+
+function Inventario(){
+    this.productos = [];
+    this.siguienteId=1;
+}
+
+Inventario.prototype.agregarProducto = function (nombre, precio, stock) {
+    // 1) Duplicado: único que necesita recorrer lo guardado
+    for (let producto of this.productos) {
+        if (producto.nombre === nombre) {
+            return "Producto ya registrado";
+        }
+    }
+    // 2) Parámetros: sin bucle
+    if (precio <= 0) {
+        return "Precio no válido";
+    }
+    if (stock < 0) {
+        return "Stock no válido";
+    }
+    // 3) Todo correcto: se añade una sola vez
+    this.productos.push({ id: this.siguienteId++, nombre, precio, stock });
+    return `Producto ${nombre} agregado con éxito, precio ${precio} y stock ${stock}`;
+};
+
+Inventario.prototype.buscar = function(id){
+    for (let producto of this.productos) {
+        if(producto.id === id){
+            return producto;
+        }
+    }return null
+};
+
+Inventario.prototype.vender = function(id,cantidad){
+    if(cantidad <=0){
+        return "Cantidad no válida";
+    }
+    let producto = this.buscar(id);
+    if(producto === null){
+        return  "Producto no encontrado";
+    }
+    if(producto.stock<cantidad){
+        return "Stock insuficiente";
+    }
+    producto.stock -= cantidad;
+    return `Venta realizada. Total: ${cantidad * producto.precio}`;
+};
+
+Inventario.prototype.reponer = function(id,cantidad){
+    if(cantidad <=0){
+        return "Cantidad no valida";
+    }
+    let producto = this.buscar(id);
+    if(producto === null){
+        return  "Producto no encontrado";
+    }
+    producto.stock += cantidad;
+    return `Stock repuesto cantidad actual => ${producto.stock}`
+};
+
+Inventario.prototype.eliminar = function(id){
+    for(let i = 0; i < this.productos.length; i++){
+        if(this.productos[i].id === id){
+            this.productos.splice(i, 1);
+            return "Producto eliminado";
+        }
+    }return "Producto no encontrado";
+};
+
+Inventario.prototype.valorInventario = function(){
+    let suma =0;
+    for (let producto of this.productos) {
+        suma += (producto.precio*producto.stock)
+    }
+    return suma;
+};
+const inv = new Inventario();
+
+console.log(inv.agregarProducto("Teclado", 25, 10));
+console.log(inv.agregarProducto("Ratón", 15, 5));
+console.log(inv.agregarProducto("Teclado", 30, 2));    // Producto ya registrado
+console.log(inv.agregarProducto("Monitor", 0, 3));     // Precio no válido
+console.log(inv.agregarProducto("Cable", 5, -1));      // Stock no válido
+
+console.log(inv.buscar(1));                            // objeto Teclado
+console.log(inv.buscar(99));                           // null
+
+console.log(inv.vender(1, 4));                         // total 100
+console.log(inv.vender(1, 20));                        // Stock insuficiente
+console.log(inv.vender(1, 0));                         // Cantidad no válida
+console.log(inv.vender(99, 1));                        // Producto no encontrado
+
+console.log(inv.reponer(2, 10));                       // Ratón: 15
+console.log(inv.reponer(99, 1));                       // Producto no encontrado
+
+console.log(inv.valorInventario());                    // 375
+
+console.log(inv.eliminar(1));                          // Producto eliminado
+console.log(inv.eliminar(99));                         // Producto no encontrado
+console.log(inv.valorInventario());                    // 225
+
+console.log(inv.agregarProducto("Webcam", 40, 2));     // id 3
+
+ */
+
+/*Ejercicio 4 => Crea una función constructora Biblioteca() (se usa con new).
+
+En el constructor (con this.):
+
+this.libros = [];
+this.prestamos = [];
+this.siguienteIdLibro = 1;
+this.siguienteIdPrestamo = 1;
+
+En el prototype, estos siete métodos:
+
+agregarLibro(titulo, autor, copias):
+Si ya existe un libro con ese título, devuelve "Libro ya registrado" (recorre con for of).
+Si copias <= 0, devuelve "Copias no válidas".
+Añade a this.libros: { id: this.siguienteIdLibro++, titulo, autor, copias }.
+Devuelve un string de confirmación.
+buscarLibro(id):
+Recorre this.libros con for of.
+Devuelve el objeto libro si lo encuentra, o null si no.
+prestar(id, socio):
+Usa this.buscarLibro(id). Si devuelve null, devuelve "Libro no encontrado".
+Si copias === 0, devuelve "No quedan copias".
+Recorre this.prestamos y, si el mismo socio ya tiene ese libro prestado (idLibro === id y socio igual), devuelve "El socio ya tiene este libro".
+Resta una copia y añade a this.prestamos: { idPrestamo: this.siguienteIdPrestamo++, idLibro: id, socio }.
+Devuelve un string de éxito que incluya el id del préstamo.
+devolver(idPrestamo):
+Busca el préstamo con for i. Si no existe, "Préstamo no encontrado".
+Guarda el objeto, bórralo con .splice(), usa this.buscarLibro(...) para sumar una copia de vuelta y devuelve confirmación.
+prestamosDeSocio(socio):
+Devuelve un array con los títulos de los libros que tiene prestados ese socio (recorre this.prestamos y usa this.buscarLibro para sacar el título).
+librosDisponibles():
+Devuelve un array con copias ({ ...libro }) de los libros con copias > 0.
+libroMasPrestado():
+Para cada libro, cuenta cuántos préstamos activos tiene. Devuelve el título del que más tiene, o "Sin préstamos" si no hay ninguno.
+
+
+// Función constructora
+function Biblioteca() {
+    this.libros = [];
+    this.prestamos = [];
+    this.siguienteIdLibro = 1;
+    this.siguienteIdPrestamo = 1;
+}
+
+// Métodos en el prototype
+Biblioteca.prototype.agregarLibro = function(titulo, autor, copias) {
+    // Verificar si el libro ya existe
+    for (let libro of this.libros) {
+        if (libro.titulo === titulo) {
+            return "Libro ya registrado";
+        }
+    }
+
+    // Validar copias
+    if (copias <= 0) {
+        return "Copias no válidas";
+    }
+
+    // Añadir el libro
+    this.libros.push({
+        id: this.siguienteIdLibro++,
+        titulo,
+        autor,
+        copias
+    });
+
+    return `Libro "${titulo}" agregado exitosamente`;
+};
+
+Biblioteca.prototype.buscarLibro = function(id) {
+    for (let libro of this.libros) {
+        if (libro.id === id) {
+            return libro;
+        }
+    }
+    return null;
+};
+
+Biblioteca.prototype.prestar = function(id, socio) {
+    // Buscar el libro
+    const libro = this.buscarLibro(id);
+    if (libro === null) {
+        return "Libro no encontrado";
+    }
+
+    // Verificar copias disponibles
+    if (libro.copias === 0) {
+        return "No quedan copias";
+    }
+
+    // Verificar si el socio ya tiene este libro prestado
+    for (let prestamo of this.prestamos) {
+        if (prestamo.idLibro === id && prestamo.socio === socio) {
+            return "El socio ya tiene este libro";
+        }
+    }
+
+    // Restar una copia
+    libro.copias--;
+
+    // Añadir préstamo
+    this.prestamos.push({
+        idPrestamo: this.siguienteIdPrestamo++,
+        idLibro: id,
+        socio
+    });
+
+    return `Préstamo realizado. ID del préstamo: ${this.siguienteIdPrestamo - 1}`;
+};
+
+Biblioteca.prototype.devolver = function(idPrestamo) {
+    // Buscar el préstamo sin break
+    let indexPrestamo = -1;
+    for (let i = 0; i < this.prestamos.length; i++) {
+        if (this.prestamos[i].idPrestamo === idPrestamo) {
+            indexPrestamo = i;
+        }
+    }
+
+    // Si no existe
+    if (indexPrestamo === -1) {
+        return "Préstamo no encontrado";
+    }
+
+    // Guardar datos del préstamo
+    const prestamo = this.prestamos[indexPrestamo];
+
+    // Eliminar el préstamo
+    this.prestamos.splice(indexPrestamo, 1);
+
+    // Buscar el libro y sumar una copia
+    const libro = this.buscarLibro(prestamo.idLibro);
+    if (libro) {
+        libro.copias++;
+    }
+
+    return `Libro devuelto exitosamente. Préstamo ${idPrestamo} cancelado`;
+};
+
+Biblioteca.prototype.prestamosDeSocio = function(socio) {
+    const titulos = [];
+    for (let prestamo of this.prestamos) {
+        if (prestamo.socio === socio) {
+            const libro = this.buscarLibro(prestamo.idLibro);
+            if (libro) {
+                titulos.push(libro.titulo);
+            }
+        }
+    }
+    return titulos;
+};
+
+Biblioteca.prototype.librosDisponibles = function() {
+    const disponibles = [];
+    for (let libro of this.libros) {
+        if (libro.copias > 0) {
+            disponibles.push({ ...libro });
+        }
+    }
+    return disponibles;
+};
+
+Biblioteca.prototype.libroMasPrestado = function() {
+    // Contar préstamos por libro
+    const conteos = {};
+    for (let prestamo of this.prestamos) {
+        if (conteos[prestamo.idLibro] === undefined) {
+            conteos[prestamo.idLibro] = 0;
+        }
+        conteos[prestamo.idLibro]++;
+    }
+
+    // Si no hay préstamos
+    if (Object.keys(conteos).length === 0) {
+        return "Sin préstamos";
+    }
+
+    // Encontrar el libro con más préstamos
+    let idMasPrestado = null;
+    let maxPrestamos = 0;
+    for (let idLibro in conteos) {
+        if (conteos[idLibro] > maxPrestamos) {
+            maxPrestamos = conteos[idLibro];
+            idMasPrestado = parseInt(idLibro);
+        }
+    }
+
+    // Obtener el título
+    const libro = this.buscarLibro(idMasPrestado);
+    return libro ? libro.titulo : "Sin préstamos";
+};
+
+ */
+
+/*Ejercicio 5 => Crea una función constructora TareasApp() (se usa con new).
+
+En el constructor (con this.):
+
+javascript
+
+
+this.tareas = [];
+this.categorias = [];
+this.siguienteIdTarea = 1;
+this.siguienteIdCategoria = 1;
+En el prototype, estos siete métodos:
+
+crearCategoria(nombre, color):
+
+Recorre this.categorias con for of. Si ya existe una categoría con ese nombre, devuelve "Categoría ya existe".
+Si nombre está vacío, devuelve "Nombre no válido".
+Añade a this.categorias: { id: this.siguienteIdCategoria++, nombre, color }.
+Devuelve un string de confirmación.
+buscarCategoria(id):
+
+Recorre this.categorias con for of.
+Devuelve el objeto categoría si lo encuentra, o null si no.
+agregarTarea(titulo, descripcion, idCategoria, prioridad):
+
+Usa this.buscarCategoria(idCategoria). Si devuelve null, devuelve "Categoría no encontrada".
+Si prioridad no es "alta", "media" o "baja", devuelve "Prioridad no válida".
+Añade a this.tareas: { id: this.siguienteIdTarea++, titulo, descripcion, idCategoria, prioridad, completada: false }.
+Devuelve un string de éxito con el id de la tarea.
+completarTarea(idTarea):
+
+Busca la tarea con for i. Si no existe, "Tarea no encontrada".
+Si ya está completada, devuelve "Tarea ya completada".
+Cambia completada a true y devuelve confirmación.
+tareasDeCategoria(idCategoria):
+
+Usa this.buscarCategoria(idCategoria). Si no existe, devuelve array vacío.
+Devuelve un array con los títulos de las tareas de esa categoría (recorre this.tareas).
+tareasIncompletas():
+
+Devuelve un array con los objetos de tareas que NO están completadas.
+tareasUrgentes():
+
+Devuelve un array con los títulos de las tareas con prioridad "alta" que NO estén completadas.
+
+
+
+function TareasApp() {
+    this.tareas = [];
+    this.categorias = [];
+    this.siguienteIdTarea = 1;
+    this.siguienteIdCategoria = 1;
+}
+
+TareasApp.prototype.crearCategoria = function (nombre, color) {
+    for (let categoria of this.categorias) {
+        if (categoria.nombre === nombre) {
+            return "Ya existe esta actegoria ";
+        }
+    }
+    if (nombre === "") {
+        return "Nombre no valido";
+    }
+    this.categorias.push({id: this.siguienteIdCategoria++, nombre, color});
+    return `Categoria ${nombre} agregada con éxito `;
+};
+
+TareasApp.prototype.buscarCategoria = function (id) {
+    for (let categoria of this.categorias) {
+        if (categoria.id === id) {
+            return categoria;
+        }
+    }
+    return null;
+};
+
+// 🐛 BUG 1 Y BUG 2 AQUÍ:
+TareasApp.prototype.agregarTarea = function (titulo, descripcion, idCategoria, prioridad) {
+    let buscar = this.buscarCategoria(idCategoria);
+    if (buscar === null) {
+        return "Categoria no encontrada";
+    }
+
+    // ❌ ERROR 1: Lógica con OR (||) siempre devuelve true
+    // if (prioridad !== "alta" || prioridad !== "media" || prioridad !== "baja") {
+    // PROBLEMA: Si prioridad es "alta", entonces "prioridad !== media" es true, y por OR devuelve error.
+    // SOLUCIÓN: Cambiar || por && (AND - todos deben ser diferentes)
+    if (prioridad !== "alta" && prioridad !== "media" && prioridad !== "baja") {
+        return "Prioridad no valida";
+    }
+
+    this.tareas.push({id: this.siguienteIdTarea++, titulo, descripcion, idCategoria, prioridad, completada: false});
+
+    // ❌ ERROR 2: Variable incorrecta "nombre" debería ser "titulo"
+    // return `Tarea ${nombre} agregada con exito`;
+    // PROBLEMA: La variable se llama "titulo", no "nombre"
+    // SOLUCIÓN: Usar "titulo"
+    return `Tarea ${titulo} agregada con exito`;
+};
+
+TareasApp.prototype.completarTarea = function (idTarea) {
+    for (let i = 0; i < this.tareas.length; i++) {
+        if (this.tareas[i].id === idTarea) {
+            if (this.tareas[i].completada === true) {
+                return "Tarea ya completada";
+            }
+            this.tareas[i].completada = true;
+            return "Tarea completada con éxito";
+        }
+    }
+    return "Tarea no encontrada";
+};
+
+// 🐛 BUG 3 AQUÍ:
+TareasApp.prototype.tareasDeCategoria = function (idCategoria) {
+    let buscarTarea = this.buscarCategoria(idCategoria);
+    // ❌ ERROR 3: Comparar "idCategoria === null" no tiene sentido
+    // PROBLEMA: idCategoria es un número, nunca será null. Debes verificar "buscarTarea"
+    // SOLUCIÓN: Cambiar "idCategoria" por "buscarTarea"
+    if (buscarTarea === null) {
+        return [];
+    }
+    let tareas = [];
+    for (let tarea of this.tareas) {
+        // ❌ ERROR 4: Comparar "tarea.id === idCategoria"
+        // PROBLEMA: tarea.id es el id de la tarea, pero quieres comparar con la categoría de la tarea
+        // SOLUCIÓN: Usar "tarea.idCategoria" en lugar de "tarea.id"
+        if(tarea.idCategoria === idCategoria) {
+            tareas.push(tarea.titulo);
+        }
+    }
+    return tareas;
+};
+
+TareasApp.prototype.tareasIncompletas = function () {
+    let incompletas = [];
+    for (let tarea of this.tareas) {
+        if(tarea.completada === false) {
+            incompletas.push(tarea.titulo);
+        }
+    }
+    return incompletas;
+};
+
+TareasApp.prototype.tareasUrgentes = function () {
+    let urgencia = [];
+    for (let tarea of this.tareas) {
+        if(tarea.prioridad === "alta" && tarea.completada === false) {
+            urgencia.push(tarea.titulo);
+        }
+    }
+    return urgencia;
+}
+
+const app = new TareasApp();
+
+// Crear categorías
+app.crearCategoria("Trabajo", "#FF0000");      // ID 1
+app.crearCategoria("Personal", "#00FF00");     // ID 2
+
+// Agregar tareas (ahora funciona correctamente)
+console.log(app.agregarTarea("Proyecto X", "Hacer diseño", 1, "alta"));
+// ✅ Antes: ERROR (OR siempre true)
+// ✅ Ahora: "Tarea Proyecto X agregada con exito"
+
+console.log(app.agregarTarea("Comprar café", "Supermercado", 2, "baja"));
+// ✅ "Tarea Comprar café agregada con exito"
+
+// Tareas de categoría (ahora funciona correctamente)
+console.log(app.tareasDeCategoria(1));
+// ✅ Antes: [] (comparaba tarea.id en lugar de tarea.idCategoria)
+// ✅ Ahora: ["Proyecto X"]
+
+console.log(app.tareasDeCategoria(2));
+// ✅ Ahora: ["Comprar café"]
+
+// Tareas urgentes
+console.log(app.tareasUrgentes());
+// ✅ ["Proyecto X"]
+
+ */
+
+/*Ejercicio 6 => Implementa un sistema de gestión de biblioteca usando constructor function y prototype methods. El sistema debe permitir gestionar libros, usuarios y préstamos.
+
+📋 Especificaciones
+Constructor Biblioteca()
+Debe inicializar:
+
+this.libros = []
+this.usuarios = []
+this.prestamos = []
+this.siguienteIdLibro = 1
+this.siguienteIdUsuario = 1
+this.siguienteIdPrestamo = 1
+🔧 Métodos a implementar en Biblioteca.prototype
+1. agregarLibro(titulo, autor, isbn, cantidad)
+Validación: Si titulo === "" o autor === "", retorna "Datos invalidos"
+Validación: Si cantidad <= 0, retorna "Cantidad debe ser mayor a 0"
+Validación: Si ya existe un libro con ese isbn, retorna "ISBN ya existe"
+Acción: Añade a this.libros un objeto con:
+javascript
+
+
+{ id: this.siguienteIdLibro++, titulo, autor, isbn, cantidad, disponible: cantidad }
+Retorno: "Libro 'titulo' agregado con exito"
+2. buscarLibroPorISBN(isbn)
+Búsqueda: Usa for of para recorrer this.libros
+Retorno: Objeto del libro si existe, null si no existe
+3. registrarUsuario(nombre, email)
+Validación: Si nombre === "" o email === "", retorna "Datos invalidos"
+Validación: Si el email ya existe, retorna "Email ya registrado"
+Acción: Añade a this.usuarios:
+javascript
+
+
+{ id: this.siguienteIdUsuario++, nombre, email, librosPrestados: 0 }
+Retorno: "Usuario nombre registrado con exito"
+4. buscarUsuarioPorEmail(email)
+Búsqueda: Usa for of
+Retorno: Objeto del usuario si existe, null si no
+5. realizarPrestamo(idUsuario, isbn, diasPrestamo)
+Validación: Busca el usuario con buscarUsuarioPorEmail(). Si no existe, retorna "Usuario no encontrado"
+Validación: Busca el libro con buscarLibroPorISBN(). Si no existe, retorna "Libro no encontrado"
+Validación: Si el libro no tiene disponibles (disponible <= 0), retorna "Libro no disponible"
+Validación: Si diasPrestamo no es 7, 14 o 30, retorna "Dias de prestamo invalidos"
+Acción:
+Decrementa `libro.disponible--
+Incrementa usuario.librosPrestados++
+Añade a this.prestamos:
+javascript
+
+
+{ id: this.siguienteIdPrestamo++, idUsuario, isbn, diasPrestamo, activo: true, fechaPrestamo: new Date() }
+Retorno: "Prestamo realizado con exito"
+⚠️ Restricción: No se puede usar break
+
+6. devolverLibro(idPrestamo)
+Búsqueda: Usa for i para recorrer this.prestamos
+Validación: Si no encuentra el préstamo, retorna "Prestamo no encontrado"
+Validación: Si prestamo.activo === false, retorna "Prestamo ya devuelto"
+Acción:
+Busca el libro por isbn y incrementa libro.disponible++
+Busca el usuario por idUsuario y decrementa usuario.librosPrestados--
+Establece prestamo.activo = false
+Retorno: "Libro devuelto con exito"
+7. librosDisponibles()
+Retorno: Array de títulos de libros donde disponible > 0
+8. usuariosPorActivos()
+Retorno: Array de nombres de usuarios que tienen al menos 1 libro prestado (librosPrestados > 0)
+9. prestamosPendientes(idUsuario)
+Validación: Busca el usuario. Si no existe, retorna []
+Retorno: Array de ISBN de libros que el usuario tiene en préstamo activo
+
+
+
+function Biblioteca() {
+    this.libros = [];
+    this.usuarios = [];
+    this.prestamos = [];
+    // ERROR: eran [] (el primer id salía 0). CORRECCIÓN: empezar en 1.
+    this.siguienteIdLibro = 1;
+    this.siguienteIdUsuario = 1;
+    this.siguienteIdPrestamo = 1;
+}
+
+Biblioteca.prototype.agregarLibro = function (titulo, autor, isbn, cantidad) {
+    // ERROR: comparabas con " " (un espacio). CORRECCIÓN: "" (vacío).
+    if (titulo === "" || autor === "") {
+        return "Datos invalidos";
+    }
+    if (cantidad <= 0) {
+        return "Cantidad debe ser mayor a 0"; // texto exacto del enunciado
+    }
+    for (let libro of this.libros) {
+        if (libro.isbn === isbn) {
+            return "ISBN ya existe";
+        }
+    }
+    this.libros.push({ id: this.siguienteIdLibro++, titulo, autor, isbn, cantidad, disponible: cantidad });
+    return `Libro '${titulo}' agregado con exito`;
+};
+
+Biblioteca.prototype.buscarLibroPorISBN = function (isbn) {
+    for (let libro of this.libros) {
+        if (libro.isbn === isbn) {
+            return libro;
+        }
+    }
+    return null;
+};
+
+Biblioteca.prototype.registrarUsuario = function (nombre, email) {
+    if (nombre === "" || email === "") {
+        return "Datos invalidos";
+    }
+    for (let usuario of this.usuarios) {
+        if (usuario.email === email) {
+            return "Email ya registrado";
+        }
+    }
+    this.usuarios.push({ id: this.siguienteIdUsuario++, nombre, email, librosPrestados: 0 });
+    return `Usuario ${nombre} registrado con exito`;
+};
+
+Biblioteca.prototype.buscarUsuarioPorEmail = function (email) {
+    for (let usuario of this.usuarios) {
+        if (usuario.email === email) {
+            return usuario;
+        }
+    }
+    return null;
+};
+
+// AÑADIDO: el enunciado llama al parámetro idUsuario, así que hace falta buscar por id.
+Biblioteca.prototype.buscarUsuarioPorId = function (id) {
+    for (let usuario of this.usuarios) {
+        if (usuario.id === id) {
+            return usuario;
+        }
+    }
+    return null;
+};
+
+Biblioteca.prototype.realizarPrestamo = function (idUsuario, isbn, diasPrestamo) {
+    // ERROR: buscarUsuarioPorEmail con un id nunca encuentra nada.
+    let usuario = this.buscarUsuarioPorId(idUsuario);
+    if (usuario === null) {
+        return "Usuario no encontrado";
+    }
+    let libro = this.buscarLibroPorISBN(isbn);
+    if (libro === null) {
+        return "Libro no encontrado";
+    }
+    // ERROR: el for sobre todos los libros fallaba si CUALQUIERA estaba a 0.
+    // CORRECCIÓN: mirar solo el libro encontrado, sin bucle.
+    if (libro.disponible <= 0) {
+        return "Libro no disponible";
+    }
+    if (diasPrestamo !== 7 && diasPrestamo !== 14 && diasPrestamo !== 30) {
+        return "Dias de prestamo invalidos";
+    }
+    // ERROR: this.libros.disponible-- y this.usuarios.librosPrestados++
+    // apuntaban a los ARRAYS (NaN). CORRECCIÓN: los objetos encontrados.
+    libro.disponible--;
+    usuario.librosPrestados++;
+    this.prestamos.push({
+        id: this.siguienteIdPrestamo++,
+        idUsuario,
+        isbn,
+        diasPrestamo,
+        activo: true,
+        fechaPrestamo: new Date()
+    });
+    return "Prestamo realizado con exito";
+};
+
+Biblioteca.prototype.devolverLibro = function (idPrestamo) {
+    for (let i = 0; i < this.prestamos.length; i++) {
+        if (this.prestamos[i].id === idPrestamo) {
+            if (this.prestamos[i].activo === false) {
+                return "Prestamo ya devuelto";
+            }
+            // ERROR: this.libros[i] y this.usuarios[i] usaban el índice del
+            // préstamo, que no tiene relación con la posición del libro/usuario.
+            // CORRECCIÓN: buscar el libro por isbn y el usuario por id.
+            let libro = this.buscarLibroPorISBN(this.prestamos[i].isbn);
+            let usuario = this.buscarUsuarioPorId(this.prestamos[i].idUsuario);
+            if (libro !== null) {
+                libro.disponible++;
+            }
+            if (usuario !== null) {
+                usuario.librosPrestados--;
+            }
+            this.prestamos[i].activo = false;
+            return "Libro devuelto con exito";
+        }
+    }
+    // El return de error va fuera del bucle.
+    return "Prestamo no encontrado";
+};
+
+Biblioteca.prototype.librosDisponibles = function () {
+    let disponibles = [];
+    for (let libro of this.libros) {
+        if (libro.disponible > 0) {
+            disponibles.push(libro.titulo);
+        }
+    }
+    return disponibles;
+};
+
+Biblioteca.prototype.usuariosPorActivos = function () {
+    let activos = [];
+    for (let usuario of this.usuarios) {
+        if (usuario.librosPrestados > 0) {
+            activos.push(usuario.nombre);
+        }
+    }
+    return activos;
+};
+
+Biblioteca.prototype.prestamosPendientes = function (idUsuario) {
+    // ERROR: usuarios.idUsuario no existe, no filtrabas los préstamos por usuario
+    // y el return dentro del bucle cortaba tras el primero.
+    // CORRECCIÓN: comprobar que el usuario existe, y recorrer los préstamos
+    // activos de ESE usuario. El return va al final.
+    if (this.buscarUsuarioPorId(idUsuario) === null) {
+        return [];
+    }
+    let pendientes = [];
+    for (let prestamo of this.prestamos) {
+        if (prestamo.idUsuario === idUsuario && prestamo.activo === true) {
+            pendientes.push(prestamo.isbn);
+        }
+    }
+    return pendientes;
+};
+
+// === PRUEBAS ===
+const mibiblioteca = new Biblioteca();
+
+console.log(mibiblioteca.agregarLibro("1984", "George Orwell", "978-0451524935", 3));
+console.log(mibiblioteca.agregarLibro("El Quijote", "Cervantes", "978-8491050121", 2));
+console.log(mibiblioteca.agregarLibro("", "Alguien", "111", 1));                 // Datos invalidos
+console.log(mibiblioteca.agregarLibro("1984", "Otro", "978-0451524935", 1));     // ISBN ya existe
+
+console.log(mibiblioteca.registrarUsuario("Juan", "juan@email.com"));
+console.log(mibiblioteca.registrarUsuario("María", "maria@email.com"));
+console.log(mibiblioteca.registrarUsuario("Juan2", "juan@email.com"));           // Email ya registrado
+
+console.log(mibiblioteca.realizarPrestamo(1, "978-0451524935", 14));  // Prestamo realizado con exito
+console.log(mibiblioteca.realizarPrestamo(1, "978-0451524935", 10));  // Dias de prestamo invalidos
+console.log(mibiblioteca.realizarPrestamo(99, "978-0451524935", 7));  // Usuario no encontrado
+console.log(mibiblioteca.realizarPrestamo(1, "000", 7));              // Libro no encontrado
+
+console.log(mibiblioteca.librosDisponibles());      // ["1984", "El Quijote"] (1984 tiene 2 copias)
+console.log(mibiblioteca.usuariosPorActivos());     // ["Juan"]
+console.log(mibiblioteca.prestamosPendientes(1));   // ["978-0451524935"]
+console.log(mibiblioteca.prestamosPendientes(99));  // []
+
+console.log(mibiblioteca.devolverLibro(1));         // Libro devuelto con exito
+console.log(mibiblioteca.devolverLibro(1));         // Prestamo ya devuelto
+console.log(mibiblioteca.devolverLibro(99));        // Prestamo no encontrado
+console.log(mibiblioteca.usuariosPorActivos());     // []
+
+ */
+
+/*Ejercicio 7 => Crea una función constructora Gimnasio() (se usa con new).
+
+En el constructor (con this.):
+
+this.clases = [];
+this.inscripciones = [];
+this.siguienteIdClase = 1;
+this.siguienteIdInscripcion = 1;
+
+(Los contadores empiezan en 1, no en [].)
+
+En el prototype, estos siete métodos:
+
+agregarClase(nombre, monitor, plazas):
+Si nombre === "" o monitor === "", devuelve "Datos no válidos".
+Si ya existe una clase con ese nombre, devuelve "Clase ya registrada" (recorre con for of).
+Si plazas <= 0, devuelve "Plazas no válidas".
+Añade a this.clases: { id: this.siguienteIdClase++, nombre, monitor, plazas }.
+Devuelve un string de confirmación.
+buscarClase(id):
+Recorre this.clases con for of.
+Devuelve el objeto clase si lo encuentra, o null si no.
+inscribir(idClase, socio):
+Usa this.buscarClase(idClase). Si devuelve null, devuelve "Clase no encontrada".
+Si plazas === 0, devuelve "Clase completa".
+Recorre this.inscripciones y, si ese socio ya está inscrito en esa clase (idClase y socio iguales), devuelve "Socio ya inscrito".
+Resta una plaza y añade a this.inscripciones: { idInscripcion: this.siguienteIdInscripcion++, idClase, socio }.
+Devuelve un string de éxito que incluya el id de la inscripción.
+cancelar(idInscripcion):
+Busca con for i. Si no existe, "Inscripción no encontrada".
+Guarda el objeto, bórralo con .splice(), usa this.buscarClase(...) para devolver la plaza y devuelve confirmación.
+clasesDeSocio(socio):
+Devuelve un array con los nombres de las clases en las que está inscrito ese socio (recorre this.inscripciones y usa this.buscarClase).
+clasesConPlazas():
+Devuelve un array con copias ({ ...clase }) de las clases con plazas > 0.
+claseMasPopular():
+Para cada clase, cuenta sus inscripciones. Devuelve el nombre de la que más tiene, o "Sin inscripciones" si no hay ninguna.
+
+
+
+function Gimnasio() {
+    this.clases = [];
+    this.inscripciones = [];
+    this.siguienteIdClase = 1;
+    this.siguienteIdInscripcion = 1;
+}
+
+Gimnasio.prototype.agregarClase = function (nombre, monitor, plazas) {
+    if (nombre === "" || monitor === "") {
+        return "Datos no válidos"; // CORRECCIÓN menor: tilde
+    }
+    for (let clase of this.clases) {
+        if (clase.nombre === nombre) {
+            return "Clase ya registrada";
+        }
+    }
+    if (plazas <= 0) {
+        return "Plazas no válidas"; // CORRECCIÓN menor: texto del enunciado
+    }
+    this.clases.push({ id: this.siguienteIdClase++, nombre, monitor, plazas });
+    return `Clase ${nombre} registrada correctamente`;
+};
+
+Gimnasio.prototype.buscarClase = function (id) {
+    for (let clase of this.clases) {
+        if (clase.id === id) {
+            return clase;
+        }
+    }
+    return null;
+};
+
+Gimnasio.prototype.inscribir = function (idClase, socio) {
+    let clase = this.buscarClase(idClase);
+    if (clase === null) {
+        return "Clase no encontrada";
+    }
+
+    // ERROR: el for sobre TODAS las clases devolvía "Clase completa" si
+    // cualquiera tenía 0 plazas.
+    // CORRECCIÓN: mirar solo la clase encontrada, sin bucle.
+    if (clase.plazas === 0) {
+        return "Clase completa";
+    }
+
+    // ERROR: `inscripcione.idClase === socio` comparaba un id con un nombre.
+    // CORRECCIÓN: comparar idClase Y socio a la vez.
+    for (let inscripcion of this.inscripciones) {
+        if (inscripcion.idClase === idClase && inscripcion.socio === socio) {
+            return "Socio ya inscrito";
+        }
+    }
+
+    // ERROR: `this.clases.plazas--` apuntaba al ARRAY (NaN).
+    // CORRECCIÓN: restar sobre el objeto encontrado.
+    clase.plazas--;
+
+    // ERROR: el mensaje mostraba el id de la clase, no el de la inscripción.
+    let id = this.siguienteIdInscripcion++;
+    this.inscripciones.push({ idInscripcion: id, idClase, socio });
+    return `Inscripción realizada con éxito (id ${id})`;
+};
+
+Gimnasio.prototype.cancelar = function (idInscripcion) {
+    for (let i = 0; i < this.inscripciones.length; i++) {
+        if (this.inscripciones[i].idInscripcion === idInscripcion) {
+            // ERROR: no guardabas el objeto antes del splice.
+            // CORRECCIÓN: guardarlo para leer su idClase.
+            let inscripcionActual = this.inscripciones[i];
+            this.inscripciones.splice(i, 1);
+
+            // ERROR: buscabas la clase con idInscripcion y comparabas con
+            // `this.clases.id` (el array no tiene id).
+            // CORRECCIÓN: usar el idClase del objeto guardado.
+            let clase = this.buscarClase(inscripcionActual.idClase);
+            if (clase !== null) {
+                clase.plazas++;
+            }
+            return "Inscripción cancelada y plaza devuelta";
+        }
+    }
+    // ERROR: este return estaba tras el bucle pero el resto quedaba como
+    // código muerto. CORRECCIÓN: es lo ÚLTIMO de la función.
+    return "Inscripción no encontrada";
+};
+
+Gimnasio.prototype.clasesDeSocio = function (socio) {
+    let nombres = [];
+    // ERROR: buscabas una clase con el nombre del socio y devolvías un solo
+    // string dentro del bucle.
+    // CORRECCIÓN: recorrer inscripciones del socio, buscar cada clase
+    // con this.buscarClase y acumular los nombres. return al final.
+    for (let inscripcion of this.inscripciones) {
+        if (inscripcion.socio === socio) {
+            let clase = this.buscarClase(inscripcion.idClase);
+            if (clase !== null) {
+                nombres.push(clase.nombre);
+            }
+        }
+    }
+    return nombres;
+};
+
+Gimnasio.prototype.clasesConPlazas = function () {
+    let disponibles = [];
+    for (let clase of this.clases) {
+        // ERROR: `clase.map(...)` lanzaba TypeError (un objeto no tiene map)
+        // y `push(...clase.nombre)` metía el nombre letra a letra.
+        // CORRECCIÓN: push de una COPIA del objeto, como pide el enunciado.
+        if (clase.plazas > 0) {
+            disponibles.push({ ...clase });
+        }
+    }
+    return disponibles;
+};
+
+Gimnasio.prototype.claseMasPopular = function () {
+    let maximo = 0;
+    let nombre = "Sin inscripciones";
+    for (let clase of this.clases) {
+        let contador = 0;
+        for (let inscripcion of this.inscripciones) {
+            if (inscripcion.idClase === clase.id) {
+                contador++;
+            }
+        }
+        if (contador > maximo) {
+            maximo = contador;
+            nombre = clase.nombre;
+        }
+    }
+    return nombre;
+};
+
+// === PRUEBAS ===
+const gym = new Gimnasio();
+
+console.log(gym.agregarClase("Spinning", "Marta", 2));
+console.log(gym.agregarClase("Yoga", "Pablo", 1));
+console.log(gym.agregarClase("Yoga", "Otro", 5));        // Clase ya registrada
+console.log(gym.agregarClase("", "Pablo", 5));           // Datos no válidos
+console.log(gym.agregarClase("Pilates", "Eva", 0));      // Plazas no válidas
+
+console.log(gym.buscarClase(1));                         // objeto Spinning
+console.log(gym.buscarClase(99));                        // null
+
+console.log(gym.inscribir(1, "Ana"));                    // éxito, id 1
+console.log(gym.inscribir(1, "Ana"));                    // Socio ya inscrito
+console.log(gym.inscribir(1, "Luis"));                   // éxito, id 2
+console.log(gym.inscribir(1, "Eva"));                    // Clase completa
+console.log(gym.inscribir(99, "Eva"));                   // Clase no encontrada
+console.log(gym.inscribir(2, "Ana"));                    // éxito, id 3
+
+console.log(gym.clasesDeSocio("Ana"));                   // ["Spinning", "Yoga"]
+console.log(gym.clasesConPlazas());                      // []
+console.log(gym.claseMasPopular());                      // Spinning
+
+console.log(gym.cancelar(1));                            // confirmación
+console.log(gym.cancelar(99));                           // Inscripción no encontrada
+console.log(gym.clasesConPlazas());                      // Spinning con 1 plaza
+console.log(gym.clasesDeSocio("Ana"));                   // ["Yoga"]
+
+console.log(gym.inscribir(1, "Eva"));                    // éxito, id 4
+
+ */
+
+/*Ejercicio 8 => Crea una función constructora Hotel() (se usa con new).
+
+En el constructor (con this.):
+
+this.habitaciones = [];
+this.reservas = [];
+this.siguienteIdHabitacion = 1;
+this.siguienteIdReserva = 1;
+
+(Los contadores empiezan en 1, no en [].)
+
+En el prototype, estos siete métodos:
+
+agregarHabitacion(numero, tipo, precioNoche):
+Si tipo === "", devuelve "Datos no válidos".
+Si ya existe una habitación con ese numero, devuelve "Habitación ya registrada" (recorre con for of).
+Si precioNoche <= 0, devuelve "Precio no válido".
+Añade a this.habitaciones: { id: this.siguienteIdHabitacion++, numero, tipo, precioNoche, ocupada: false }.
+Devuelve un string de confirmación.
+buscarHabitacion(id):
+Recorre this.habitaciones con for of.
+Devuelve el objeto habitación si la encuentra, o null si no.
+reservar(idHabitacion, cliente, noches):
+Usa this.buscarHabitacion(idHabitacion). Si devuelve null, devuelve "Habitación no encontrada".
+Si noches <= 0, devuelve "Noches no válidas".
+Si la habitación está ocupada (ocupada === true), devuelve "Habitación ocupada".
+Recorre this.reservas y, si ese cliente ya tiene una reserva con activa === true, devuelve "Cliente ya tiene una reserva".
+Pone ocupada = true y añade a this.reservas: { idReserva: this.siguienteIdReserva++, idHabitacion, cliente, noches, total: noches * precioNoche, activa: true }.
+Devuelve un string de éxito que incluya el id de la reserva y el total.
+finalizarReserva(idReserva):
+Busca con for i. Si no existe, "Reserva no encontrada".
+Si activa === false, "Reserva ya finalizada".
+Pone activa = false, usa this.buscarHabitacion(...) para dejar la habitación ocupada = false y devuelve confirmación.
+No se borra la reserva: cuenta en los ingresos.
+habitacionesLibres():
+Devuelve un array con copias ({ ...habitacion }) de las habitaciones con ocupada === false.
+reservasDeCliente(cliente):
+Devuelve un array con los números de habitación de todas las reservas de ese cliente (activas o no). Usa this.buscarHabitacion para sacar el número.
+ingresosTotales():
+Devuelve la suma de total de las reservas con activa === false (las activas aún no cuentan).
+
+
+
+function Hotel(){
+    this.habitaciones = [];
+    this.reservas = [];
+    this.siguienteIdHabitacion = 1;
+    this.siguienteIdReserva = 1;
+}
+
+Hotel.prototype.agregarHabitacion = function(numero,tipo,precioNoche){
+    if(tipo===""){
+        return "Dato no valido";
+    }
+    for (let habitacione of this.habitaciones) {
+        if(habitacione.numero === numero){
+            return "Habitacion ya registrada";
+        }
+    }
+    if(precioNoche<=0){
+        return "Precio no valido";
+    }
+    this.habitaciones.push({ id: this.siguienteIdHabitacion++, numero, tipo, precioNoche, ocupada: false })
+    return `Habitacion agregada con éxito ${numero}`;
+};
+
+Hotel.prototype.buscarHabitacion=function (id){
+    for (let habitacione of this.habitaciones) {
+        if(habitacione.id===id){
+            return habitacione;
+        }
+    }return null;
+};
+
+Hotel.prototype.reservar = function (idHabitacion, cliente, noches) {
+    let habitacion = this.buscarHabitacion(idHabitacion);
+    if (habitacion === null) {
+        return "Habitación no encontrada";
+    }
+    if (noches <= 0) {
+        return "Noches no válidas";
+    }
+    // ERROR: this.habitaciones.ocupada (el array no tiene ocupada)
+    if (habitacion.ocupada === true) {
+        return "Habitación ocupada";
+    }
+    // ERROR: no comprobabas de quién era la reserva
+    for (let reserva of this.reservas) {
+        if (reserva.cliente === cliente && reserva.activa === true) {
+            return "Cliente ya tiene una reserva";
+        }
+    }
+    // Todo validado: ahora se modifica, una sola vez y sin if extra
+    habitacion.ocupada = true;
+    let total = noches * habitacion.precioNoche;   // precioNoche sale de la habitación
+    let id = this.siguienteIdReserva++;
+    this.reservas.push({
+        idReserva: id,
+        idHabitacion: idHabitacion,
+        cliente: cliente,
+        noches: noches,
+        total: total,
+        activa: true
+    });
+    return `Reserva ${id} realizada con éxito. Total: ${total}`;
+};
+
+Hotel.prototype.finalizarReserva = function (idReserva) {
+    for (let i = 0; i < this.reservas.length; i++) {
+        if (this.reservas[i].idReserva === idReserva) {
+            if (this.reservas[i].activa === false) {
+                return "Reserva ya finalizada";
+            }
+            this.reservas[i].activa = false;
+            let habitacion = this.buscarHabitacion(this.reservas[i].idHabitacion);
+            if (habitacion !== null) {
+                habitacion.ocupada = false;
+            }
+            return "Reserva finalizada y habitación liberada";
+        }
+    }
+    return "Reserva no encontrada";
+};
+
+Hotel.prototype.habitacionesLibres = function () {
+    let libres = [];
+    for (let habitacion of this.habitaciones) {
+        if (habitacion.ocupada === false) {
+            libres.push({ ...habitacion });
+        }
+    }
+    return libres;
+};
+
+Hotel.prototype.reservasDeCliente = function (cliente) {
+    let numeros = [];
+    for (let reserva of this.reservas) {
+        if (reserva.cliente === cliente) {
+            let habitacion = this.buscarHabitacion(reserva.idHabitacion);
+            if (habitacion !== null) {
+                numeros.push(habitacion.numero);
+            }
+        }
+    }
+    return numeros;
+};
+
+Hotel.prototype.ingresosTotales = function () {
+    let total = 0;
+    for (let reserva of this.reservas) {
+        if (reserva.activa === false) {
+            total += reserva.total;
+        }
+    }
+    return total;
+};
+
+/*Ejercicio 9 =>
+
+Mismo nivel que el hotel: dos arrays, un método de búsqueda, métodos que se llaman entre sí con this. y un informe al final. La novedad es que hay una tarifa fija guardada en el constructor y se usa con this.tarifa.
+
+Crea una función constructora Parking() (se usa con new).
+
+En el constructor (con this.):
+
+this.plazas = [];
+this.tickets = [];
+this.siguienteIdPlaza = 1;
+this.siguienteIdTicket = 1;
+this.tarifa = 2; (euros por hora)
+
+En el prototype, estos ocho métodos:
+
+agregarPlaza(numero, tipo):
+Si tipo === "", devuelve "Datos no válidos".
+Si ya existe una plaza con ese numero, devuelve "Plaza ya registrada" (recorre con for of).
+Añade a this.plazas: { id: this.siguienteIdPlaza++, numero, tipo, ocupada: false }.
+Devuelve un string de confirmación.
+buscarPlaza(id):
+Recorre this.plazas con for of.
+Devuelve el objeto plaza si la encuentra, o null si no.
+entrar(idPlaza, matricula):
+Usa this.buscarPlaza(idPlaza). Si devuelve null, devuelve "Plaza no encontrada".
+Si la plaza está ocupada (ocupada === true), devuelve "Plaza ocupada".
+Recorre this.tickets y, si esa matricula ya tiene un ticket con activo === true, devuelve "Vehículo ya está dentro".
+Pone ocupada = true y añade a this.tickets: { idTicket: this.siguienteIdTicket++, idPlaza, matricula, total: 0, activo: true }.
+Devuelve un string de éxito que incluya el id del ticket.
+salir(idTicket, horas):
+Si horas <= 0, devuelve "Horas no válidas".
+Busca el ticket con for i. Si no existe, "Ticket no encontrado".
+Si activo === false, "Ticket ya cerrado".
+Calcula total = horas * this.tarifa, lo guarda en el ticket y pone activo = false.
+Usa this.buscarPlaza(...) para dejar la plaza ocupada = false.
+Devuelve un string que incluya el total.
+No se borra el ticket: cuenta en la recaudación.
+plazasLibres():
+Devuelve un array con copias ({ ...plaza }) de las plazas con ocupada === false.
+ticketsDeVehiculo(matricula):
+Devuelve un array con los números de plaza de todos los tickets de esa matrícula (activos o cerrados). Usa this.buscarPlaza para sacar el número.
+recaudacion():
+Devuelve la suma de total de los tickets con activo === false.
+plazaMasUsada():
+Para cada plaza, cuenta cuántos tickets tiene (activos o cerrados). Devuelve el número de la que más tiene, o "Sin usos" si no hay ningún ticket.
+
+function Parking() {
+    this.plazas = [];
+    this.tickets = [];
+    this.siguienteIdPlaza = 1;
+    this.siguienteIdTicket = 1;
+    this.tarifa = 2;
+}
+
+Parking.prototype.agregarPlaza = function (numero, tipo) {
+    if (tipo === "") {
+        return "Datos no válidos";
+    }
+    for (let plaza of this.plazas) {
+        if (plaza.numero === numero) {
+            return "Plaza ya registrada";
+        }
+    }
+    this.plazas.push({ id: this.siguienteIdPlaza++, numero, tipo, ocupada: false });
+    return `Plaza ${numero} registrada con éxito`;
+};
+
+Parking.prototype.buscarPlaza = function (id) {
+    for (let plaza of this.plazas) {
+        if (plaza.id === id) {
+            return plaza;
+        }
+    }
+    return null;
+};
+
+Parking.prototype.entrar = function (idPlaza, matricula) {
+    let plaza = this.buscarPlaza(idPlaza);
+    if (plaza === null) {
+        return "Plaza no encontrada";
+    }
+    if (plaza.ocupada === true) {
+        return "Plaza ocupada";
+    }
+    for (let ticket of this.tickets) {
+        if (ticket.matricula === matricula && ticket.activo === true) {
+            return "Vehículo ya está dentro";
+        }
+    }
+
+    plaza.ocupada = true;
+
+    // ERROR: `this.tickets.idTicket` trataba el array como un objeto (undefined).
+    // CORRECCIÓN: guardar el id en una variable ANTES del push y usarla.
+    let id = this.siguienteIdTicket++;
+    this.tickets.push({ idTicket: id, idPlaza, matricula, total: 0, activo: true });
+    return `Vehículo aparcado con éxito. Ticket ${id}`;
+};
+
+Parking.prototype.salir = function (idTicket, horas) {
+    if (horas <= 0) {
+        return "Horas no válidas";
+    }
+    for (let i = 0; i < this.tickets.length; i++) {
+        if (this.tickets[i].idTicket === idTicket) {
+            if (this.tickets[i].activo === false) {
+                return "Ticket ya cerrado";
+            }
+
+            let total = horas * this.tarifa;
+
+            // ERROR: `this.tickets[i].push(total)` (un ticket es un objeto, no tiene push).
+            // CORRECCIÓN: asignar la propiedad `total`.
+            this.tickets[i].total = total;
+            this.tickets[i].activo = false;
+
+            // ERROR: `this.buscar(idTicket)` buscaba una PLAZA con el id de un TICKET.
+            // CORRECCIÓN: usar el idPlaza guardado en el ticket.
+            let plaza = this.buscarPlaza(this.tickets[i].idPlaza);
+            if (plaza !== null) {
+                plaza.ocupada = false;
+            }
+
+            // ERROR: devolvías solo el número. El enunciado pide un string con el total.
+            return `Salida registrada. Total: ${total}`;
+        }
+    }
+    return "Ticket no encontrado";
+};
+
+Parking.prototype.plazasLibres = function () {
+    let libres = [];
+    // ERROR: el return estaba DENTRO del bucle: devolvía solo la primera plaza
+    // (como objeto) y, si no había ninguna libre, undefined.
+    // CORRECCIÓN: acumular copias en un array y devolverlo al final.
+    for (let plaza of this.plazas) {
+        if (plaza.ocupada === false) {
+            libres.push({ ...plaza });
+        }
+    }
+    return libres;
+};
+
+// ERROR: faltaba `.prototype` (era `Parking.ticketsDeVehiculo`), buscabas una
+// plaza con una matrícula y el método estaba sin terminar.
+// CORRECCIÓN: recorrer los tickets de esa matrícula y sacar el número de
+// la plaza con this.buscarPlaza.
+Parking.prototype.ticketsDeVehiculo = function (matricula) {
+    let numeros = [];
+    for (let ticket of this.tickets) {
+        if (ticket.matricula === matricula) {
+            let plaza = this.buscarPlaza(ticket.idPlaza);
+            if (plaza !== null) {
+                numeros.push(plaza.numero);
+            }
+        }
+    }
+    return numeros;
+};
+
+Parking.prototype.recaudacion = function () {
+    let suma = 0;
+    for (let ticket of this.tickets) {
+        if (ticket.activo === false) {
+            suma += ticket.total;
+        }
+    }
+    return suma;
+};
+
+Parking.prototype.plazaMasUsada = function () {
+    let maximo = 0;
+    let numero = "Sin usos";
+    for (let plaza of this.plazas) {
+        let contador = 0;
+        for (let ticket of this.tickets) {
+            if (ticket.idPlaza === plaza.id) {
+                contador++;
+            }
+        }
+        if (contador > maximo) {
+            maximo = contador;
+            numero = plaza.numero;
+        }
+    }
+    return numero;
+};
+
+// === PRUEBAS ===
+const p = new Parking();
+
+console.log(p.agregarPlaza(1, "Coche"));
+console.log(p.agregarPlaza(2, "Moto"));
+console.log(p.agregarPlaza(1, "Coche"));        // Plaza ya registrada
+console.log(p.agregarPlaza(3, ""));             // Datos no válidos
+
+console.log(p.buscarPlaza(1));                  // objeto plaza 1
+console.log(p.buscarPlaza(99));                 // null
+
+console.log(p.entrar(1, "1111AAA"));            // éxito, ticket 1
+console.log(p.entrar(1, "2222BBB"));            // Plaza ocupada
+console.log(p.entrar(2, "1111AAA"));            // Vehículo ya está dentro
+console.log(p.entrar(99, "3333CCC"));           // Plaza no encontrada
+console.log(p.entrar(2, "2222BBB"));            // éxito, ticket 2
+
+console.log(p.plazasLibres());                  // []
+console.log(p.recaudacion());                   // 0
+
+console.log(p.salir(1, 0));                     // Horas no válidas
+console.log(p.salir(1, 3));                     // total 6
+console.log(p.salir(1, 3));                     // Ticket ya cerrado
+console.log(p.salir(99, 1));                    // Ticket no encontrado
+
+console.log(p.plazasLibres());                  // solo la plaza 1
+console.log(p.recaudacion());                   // 6
+console.log(p.ticketsDeVehiculo("1111AAA"));    // [1]
+
+console.log(p.entrar(1, "1111AAA"));            // ticket 3
+console.log(p.ticketsDeVehiculo("1111AAA"));    // [1, 1]
+console.log(p.plazaMasUsada());                 // 1
+
+
 */
+
