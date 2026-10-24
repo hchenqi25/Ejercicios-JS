@@ -7220,3 +7220,1368 @@ console.log(p.plazaMasUsada());                 // 1
 
 */
 
+
+/*Ejercicio 9 =>
+
+Mismo nivel que el hotel: dos arrays, un método de búsqueda, métodos que se llaman entre sí con this. y un informe al final. La novedad es que hay una tarifa fija guardada en el constructor y se usa con this.tarifa.
+
+Crea una función constructora Parking() (se usa con new).
+
+En el constructor (con this.):
+
+this.plazas = [];
+this.tickets = [];
+this.siguienteIdPlaza = 1;
+this.siguienteIdTicket = 1;
+this.tarifa = 2; (euros por hora)
+
+En el prototype, estos ocho métodos:
+
+agregarPlaza(numero, tipo):
+Si tipo === "", devuelve "Datos no válidos".
+Si ya existe una plaza con ese numero, devuelve "Plaza ya registrada" (recorre con for of).
+Añade a this.plazas: { id: this.siguienteIdPlaza++, numero, tipo, ocupada: false }.
+Devuelve un string de confirmación.
+buscarPlaza(id):
+Recorre this.plazas con for of.
+Devuelve el objeto plaza si la encuentra, o null si no.
+entrar(idPlaza, matricula):
+Usa this.buscarPlaza(idPlaza). Si devuelve null, devuelve "Plaza no encontrada".
+Si la plaza está ocupada (ocupada === true), devuelve "Plaza ocupada".
+Recorre this.tickets y, si esa matricula ya tiene un ticket con activo === true, devuelve "Vehículo ya está dentro".
+Pone ocupada = true y añade a this.tickets: { idTicket: this.siguienteIdTicket++, idPlaza, matricula, total: 0, activo: true }.
+Devuelve un string de éxito que incluya el id del ticket.
+salir(idTicket, horas):
+Si horas <= 0, devuelve "Horas no válidas".
+Busca el ticket con for i. Si no existe, "Ticket no encontrado".
+Si activo === false, "Ticket ya cerrado".
+Calcula total = horas * this.tarifa, lo guarda en el ticket y pone activo = false.
+Usa this.buscarPlaza(...) para dejar la plaza ocupada = false.
+Devuelve un string que incluya el total.
+No se borra el ticket: cuenta en la recaudación.
+plazasLibres():
+Devuelve un array con copias ({ ...plaza }) de las plazas con ocupada === false.
+ticketsDeVehiculo(matricula):
+Devuelve un array con los números de plaza de todos los tickets de esa matrícula (activos o cerrados). Usa this.buscarPlaza para sacar el número.
+recaudacion():
+Devuelve la suma de total de los tickets con activo === false.
+plazaMasUsada():
+Para cada plaza, cuenta cuántos tickets tiene (activos o cerrados). Devuelve el número de la que más tiene, o "Sin usos" si no hay ningún ticket.
+
+function Parking() {
+    this.plazas = [];
+    this.tickets = [];
+    this.siguienteIdPlaza = 1;
+    this.siguienteIdTicket = 1;
+    this.tarifa = 2;
+}
+
+Parking.prototype.agregarPlaza = function (numero, tipo) {
+    if (tipo === "") {
+        return "Datos no válidos";
+    }
+    for (let plaza of this.plazas) {
+        if (plaza.numero === numero) {
+            return "Plaza ya registrada";
+        }
+    }
+    this.plazas.push({ id: this.siguienteIdPlaza++, numero, tipo, ocupada: false });
+    return `Plaza ${numero} registrada con éxito`;
+};
+
+Parking.prototype.buscarPlaza = function (id) {
+    for (let plaza of this.plazas) {
+        if (plaza.id === id) {
+            return plaza;
+        }
+    }
+    return null;
+};
+
+Parking.prototype.entrar = function (idPlaza, matricula) {
+    let plaza = this.buscarPlaza(idPlaza);
+    if (plaza === null) {
+        return "Plaza no encontrada";
+    }
+    if (plaza.ocupada === true) {
+        return "Plaza ocupada";
+    }
+    for (let ticket of this.tickets) {
+        if (ticket.matricula === matricula && ticket.activo === true) {
+            return "Vehículo ya está dentro";
+        }
+    }
+
+    plaza.ocupada = true;
+
+    // ERROR: `this.tickets.idTicket` trataba el array como un objeto (undefined).
+    // CORRECCIÓN: guardar el id en una variable ANTES del push y usarla.
+    let id = this.siguienteIdTicket++;
+    this.tickets.push({ idTicket: id, idPlaza, matricula, total: 0, activo: true });
+    return `Vehículo aparcado con éxito. Ticket ${id}`;
+};
+
+Parking.prototype.salir = function (idTicket, horas) {
+    if (horas <= 0) {
+        return "Horas no válidas";
+    }
+    for (let i = 0; i < this.tickets.length; i++) {
+        if (this.tickets[i].idTicket === idTicket) {
+            if (this.tickets[i].activo === false) {
+                return "Ticket ya cerrado";
+            }
+
+            let total = horas * this.tarifa;
+
+            // ERROR: `this.tickets[i].push(total)` (un ticket es un objeto, no tiene push).
+            // CORRECCIÓN: asignar la propiedad `total`.
+            this.tickets[i].total = total;
+            this.tickets[i].activo = false;
+
+            // ERROR: `this.buscar(idTicket)` buscaba una PLAZA con el id de un TICKET.
+            // CORRECCIÓN: usar el idPlaza guardado en el ticket.
+            let plaza = this.buscarPlaza(this.tickets[i].idPlaza);
+            if (plaza !== null) {
+                plaza.ocupada = false;
+            }
+
+            // ERROR: devolvías solo el número. El enunciado pide un string con el total.
+            return `Salida registrada. Total: ${total}`;
+        }
+    }
+    return "Ticket no encontrado";
+};
+
+Parking.prototype.plazasLibres = function () {
+    let libres = [];
+    // ERROR: el return estaba DENTRO del bucle: devolvía solo la primera plaza
+    // (como objeto) y, si no había ninguna libre, undefined.
+    // CORRECCIÓN: acumular copias en un array y devolverlo al final.
+    for (let plaza of this.plazas) {
+        if (plaza.ocupada === false) {
+            libres.push({ ...plaza });
+        }
+    }
+    return libres;
+};
+
+// ERROR: faltaba `.prototype` (era `Parking.ticketsDeVehiculo`), buscabas una
+// plaza con una matrícula y el método estaba sin terminar.
+// CORRECCIÓN: recorrer los tickets de esa matrícula y sacar el número de
+// la plaza con this.buscarPlaza.
+Parking.prototype.ticketsDeVehiculo = function (matricula) {
+    let numeros = [];
+    for (let ticket of this.tickets) {
+        if (ticket.matricula === matricula) {
+            let plaza = this.buscarPlaza(ticket.idPlaza);
+            if (plaza !== null) {
+                numeros.push(plaza.numero);
+            }
+        }
+    }
+    return numeros;
+};
+
+Parking.prototype.recaudacion = function () {
+    let suma = 0;
+    for (let ticket of this.tickets) {
+        if (ticket.activo === false) {
+            suma += ticket.total;
+        }
+    }
+    return suma;
+};
+
+Parking.prototype.plazaMasUsada = function () {
+    let maximo = 0;
+    let numero = "Sin usos";
+    for (let plaza of this.plazas) {
+        let contador = 0;
+        for (let ticket of this.tickets) {
+            if (ticket.idPlaza === plaza.id) {
+                contador++;
+            }
+        }
+        if (contador > maximo) {
+            maximo = contador;
+            numero = plaza.numero;
+        }
+    }
+    return numero;
+};
+
+// === PRUEBAS ===
+const p = new Parking();
+
+console.log(p.agregarPlaza(1, "Coche"));
+console.log(p.agregarPlaza(2, "Moto"));
+console.log(p.agregarPlaza(1, "Coche"));        // Plaza ya registrada
+console.log(p.agregarPlaza(3, ""));             // Datos no válidos
+
+console.log(p.buscarPlaza(1));                  // objeto plaza 1
+console.log(p.buscarPlaza(99));                 // null
+
+console.log(p.entrar(1, "1111AAA"));            // éxito, ticket 1
+console.log(p.entrar(1, "2222BBB"));            // Plaza ocupada
+console.log(p.entrar(2, "1111AAA"));            // Vehículo ya está dentro
+console.log(p.entrar(99, "3333CCC"));           // Plaza no encontrada
+console.log(p.entrar(2, "2222BBB"));            // éxito, ticket 2
+
+console.log(p.plazasLibres());                  // []
+console.log(p.recaudacion());                   // 0
+
+console.log(p.salir(1, 0));                     // Horas no válidas
+console.log(p.salir(1, 3));                     // total 6
+console.log(p.salir(1, 3));                     // Ticket ya cerrado
+console.log(p.salir(99, 1));                    // Ticket no encontrado
+
+console.log(p.plazasLibres());                  // solo la plaza 1
+console.log(p.recaudacion());                   // 6
+console.log(p.ticketsDeVehiculo("1111AAA"));    // [1]
+
+console.log(p.entrar(1, "1111AAA"));            // ticket 3
+console.log(p.ticketsDeVehiculo("1111AAA"));    // [1, 1]
+console.log(p.plazaMasUsada());                 // 1
+
+
+
+ */
+
+/*Ejercicio 10 => Mismo nivel que el parking, con una novedad: las citas tienen un estado en texto ("pendiente" / "atendida") y el duplicado se comprueba con tres datos a la vez.
+
+Crea una función constructora Veterinaria() (se usa con new).
+
+En el constructor (con this.):
+
+this.mascotas = [];
+this.citas = [];
+this.siguienteIdMascota = 1;
+this.siguienteIdCita = 1;
+this.precioConsulta = 30;
+
+En el prototype, estos ocho métodos:
+
+agregarMascota(nombre, especie, dueno):
+Si nombre === "" o dueno === "", devuelve "Datos no válidos".
+Si ya existe una mascota con el mismo nombre y el mismo dueno, devuelve "Mascota ya registrada" (recorre con for of).
+Añade a this.mascotas: { id: this.siguienteIdMascota++, nombre, especie, dueno }.
+Devuelve un string de confirmación.
+buscarMascota(id):
+Recorre this.mascotas con for of.
+Devuelve el objeto mascota si la encuentra, o null si no.
+pedirCita(idMascota, fecha):
+Usa this.buscarMascota(idMascota). Si devuelve null, devuelve "Mascota no encontrada".
+Si fecha === "", devuelve "Fecha no válida".
+Recorre this.citas y, si esa mascota ya tiene una cita en esa fecha con estado === "pendiente", devuelve "Ya tiene cita ese día".
+Añade a this.citas: { idCita: this.siguienteIdCita++, idMascota, fecha, estado: "pendiente", importe: 0 }.
+Devuelve un string de éxito que incluya el id de la cita.
+atenderCita(idCita, extra):
+Si extra < 0, devuelve "Importe extra no válido".
+Busca la cita con for i. Si no existe, "Cita no encontrada".
+Si estado !== "pendiente", "La cita no está pendiente".
+Calcula importe = this.precioConsulta + extra, lo guarda en la cita y pone estado = "atendida".
+Devuelve un string que incluya el importe.
+No se borra la cita: cuenta en los ingresos.
+cancelarCita(idCita):
+Busca con for i. Si no existe, "Cita no encontrada".
+Si estado !== "pendiente", "Solo se pueden cancelar citas pendientes".
+Guarda el objeto, bórralo con .splice() y devuelve confirmación.
+citasDeMascota(idMascota):
+Devuelve un array con copias ({ ...cita }) de todas las citas de esa mascota (pendientes o atendidas).
+ingresos():
+Devuelve la suma de importe de las citas con estado === "atendida".
+mascotaMasVisitas():
+Para cada mascota, cuenta sus citas atendidas. Devuelve el nombre de la que más tiene, o "Sin visitas" si ninguna ha sido atendida.
+
+
+
+function Veterinaria() {
+    this.mascotas = [];
+    this.citas = [];
+    this.siguienteIdMascota = 1;
+    this.siguienteIdCita = 1;
+    this.precioConsulta = 30;
+}
+
+Veterinaria.prototype.agregarMascota = function (nombre, especie, dueno) {
+    if (nombre === "" || dueno === "") {
+        // CORRECCIÓN: texto exacto del enunciado.
+        return "Datos no válidos";
+    }
+    for (let mascota of this.mascotas) {
+        if (mascota.nombre === nombre && mascota.dueno === dueno) {
+            return "Mascota ya registrada";
+        }
+    }
+    this.mascotas.push({ id: this.siguienteIdMascota++, nombre, especie, dueno });
+    return `Mascota ${nombre} registrada correctamente`;
+};
+
+Veterinaria.prototype.buscarMascota = function (id) {
+    for (let mascota of this.mascotas) {
+        if (mascota.id === id) {
+            return mascota;
+        }
+    }
+    return null;
+};
+
+Veterinaria.prototype.pedirCita = function (idMascota, fecha) {
+    let mascota = this.buscarMascota(idMascota);
+    if (mascota === null) {
+        return "Mascota no encontrada";
+    }
+    if (fecha === "") {
+        return "Fecha no válida";
+    }
+    for (let cita of this.citas) {
+        // ERROR: faltaba comprobar de qué mascota es la cita. Así, la cita
+        // de una mascota bloqueaba a todas las demás ese día.
+        // CORRECCIÓN: comparar también cita.idMascota === idMascota.
+        if (cita.idMascota === idMascota && cita.fecha === fecha && cita.estado === "pendiente") {
+            return "Ya tiene cita ese día";
+        }
+    }
+
+    // ERROR: `this.citas.idCita` (el array no tiene idCita) daba undefined.
+    // CORRECCIÓN: guardar el id en una variable ANTES del push y usarla.
+    let id = this.siguienteIdCita++;
+    this.citas.push({ idCita: id, idMascota, fecha, estado: "pendiente", importe: 0 });
+    return `Cita ${id} registrada correctamente`;
+};
+
+Veterinaria.prototype.atenderCita = function (idCita, extra) {
+    if (extra < 0) {
+        return "Importe extra no válido";
+    }
+    for (let i = 0; i < this.citas.length; i++) {
+        // ERROR: `this.citas.idCita !== idCita` comparaba con el ARRAY y, además,
+        // el return de error estaba dentro del bucle (fallaba en la 1ª cita
+        // que no coincidía).
+        // CORRECCIÓN: `this.citas[i].idCita === idCita`, y el error va fuera.
+        if (this.citas[i].idCita === idCita) {
+            if (this.citas[i].estado !== "pendiente") {
+                return "La cita no está pendiente";
+            }
+            // ERROR: devolvías un objeto {importe, estado} y no cambiabas nada.
+            // CORRECCIÓN: asignar los valores a LA CITA encontrada
+            // y devolver un string con el importe.
+            let importe = this.precioConsulta + extra;
+            this.citas[i].importe = importe;
+            this.citas[i].estado = "atendida";
+            return `Cita atendida. Importe: ${importe}`;
+        }
+    }
+    return "Cita no encontrada";
+};
+
+Veterinaria.prototype.cancelarCita = function (idCita) {
+    for (let i = 0; i < this.citas.length; i++) {
+        // ERROR: no comprobabas el idCita, así que actuabas sobre cualquier cita
+        // y borrabas en cada vuelta.
+        // CORRECCIÓN: actuar SOLO cuando el id coincide, y salir con return.
+        if (this.citas[i].idCita === idCita) {
+            // ERROR: `this.citas.estado` era del array. Es `this.citas[i].estado`.
+            if (this.citas[i].estado !== "pendiente") {
+                return "Solo se pueden cancelar citas pendientes";
+            }
+            this.citas.splice(i, 1);
+            return "Cita cancelada";
+        }
+    }
+    // ERROR: siempre devolvías "Cita eliminada", aunque no existiera.
+    return "Cita no encontrada";
+};
+
+Veterinaria.prototype.citasDeMascota = function (idMascota) {
+    let historial = [];
+    // ERROR: `push(...cita)` lanzaba TypeError (un objeto no se puede expandir
+    // en push) y no filtrabas por mascota.
+    // CORRECCIÓN: for of, filtrar por idMascota y meter una COPIA { ...cita }.
+    for (let cita of this.citas) {
+        if (cita.idMascota === idMascota) {
+            historial.push({ ...cita });
+        }
+    }
+    return historial;
+};
+
+Veterinaria.prototype.ingresos = function () {
+    let suma = 0;
+    for (let cita of this.citas) {
+        if (cita.estado === "atendida") {
+            suma += cita.importe;
+        }
+    }
+    return suma;
+};
+
+Veterinaria.prototype.mascotaMasVisitas = function () {
+    let maximo = 0;
+    let nombre = "Sin visitas";
+    for (let mascota of this.mascotas) {
+        let contador = 0;
+        for (let cita of this.citas) {
+            if (cita.idMascota === mascota.id && cita.estado === "atendida") {
+                contador++;
+            }
+        }
+        if (contador > maximo) {
+            maximo = contador;
+            nombre = mascota.nombre;
+        }
+    }
+    return nombre;
+};
+
+// === PRUEBAS ===
+const vet = new Veterinaria();
+
+console.log(vet.agregarMascota("Rex", "Perro", "Ana"));
+console.log(vet.agregarMascota("Mia", "Gato", "Luis"));
+console.log(vet.agregarMascota("Rex", "Perro", "Ana"));    // Mascota ya registrada
+console.log(vet.agregarMascota("Rex", "Perro", "Eva"));    // confirmación (otro dueño)
+console.log(vet.agregarMascota("", "Gato", "Eva"));        // Datos no válidos
+
+console.log(vet.buscarMascota(1));                         // objeto Rex de Ana
+console.log(vet.buscarMascota(99));                        // null
+
+console.log(vet.pedirCita(1, "2026-11-02"));               // cita 1
+console.log(vet.pedirCita(1, "2026-11-02"));               // Ya tiene cita ese día
+console.log(vet.pedirCita(1, "2026-11-03"));               // cita 2
+console.log(vet.pedirCita(99, "2026-11-02"));              // Mascota no encontrada
+console.log(vet.pedirCita(2, ""));                         // Fecha no válida
+console.log(vet.pedirCita(2, "2026-11-02"));               // cita 3
+
+console.log(vet.atenderCita(1, -5));                       // Importe extra no válido
+console.log(vet.atenderCita(1, 20));                       // importe 50
+console.log(vet.atenderCita(1, 0));                        // La cita no está pendiente
+console.log(vet.atenderCita(99, 0));                       // Cita no encontrada
+console.log(vet.ingresos());                               // 50
+
+console.log(vet.cancelarCita(1));                          // Solo se pueden cancelar citas pendientes
+console.log(vet.cancelarCita(2));                          // Cita cancelada
+console.log(vet.cancelarCita(99));                         // Cita no encontrada
+
+console.log(vet.atenderCita(3, 0));                        // importe 30
+console.log(vet.pedirCita(1, "2026-11-10"));               // cita 4
+console.log(vet.atenderCita(4, 10));                       // importe 40
+
+console.log(vet.citasDeMascota(1));                        // citas 1 y 4
+console.log(vet.ingresos());                               // 120
+console.log(vet.mascotaMasVisitas());                      // Rex      // Rex (2 visitas)
+
+ */
+
+/*Ejercicio 11 => Esto es de lo más habitual en una empresa: el departamento de informática recibe incidencias de los empleados (“no hay wifi”, “falla la VPN”), las asigna a técnicos y saca un informe. Aparece en cualquier trabajo con herramientas tipo Jira o ServiceNow.
+
+Crea una función constructora Helpdesk() (se usa con new).
+
+En el constructor (con this.):
+
+this.tecnicos = [];
+this.incidencias = [];
+this.siguienteIdTecnico = 1;
+this.siguienteIdIncidencia = 1;
+this.limiteActivas = 3; (máximo de incidencias "en curso" por técnico)
+
+En el prototype, estos ocho métodos:
+
+agregarTecnico(nombre, area):
+Si nombre === "" o area === "", devuelve "Datos no válidos".
+Si ya existe un técnico con ese nombre, devuelve "Técnico ya registrado" (recorre con for of).
+Añade a this.tecnicos: { id: this.siguienteIdTecnico++, nombre, area }.
+Devuelve un string de confirmación.
+buscarTecnico(id):
+Recorre this.tecnicos con for of.
+Devuelve el objeto técnico si lo encuentra, o null si no.
+buscarIncidencia(id):
+Recorre this.incidencias con for of.
+Devuelve el objeto incidencia si la encuentra, o null si no.
+crearIncidencia(titulo, prioridad, solicitante):
+Si titulo === "" o solicitante === "", devuelve "Datos no válidos".
+Si prioridad no es "baja", "media" ni "alta", devuelve "Prioridad no válida".
+Si ya hay una incidencia con el mismo titulo y el mismo solicitante cuyo estado no sea "resuelta", devuelve "Incidencia duplicada".
+Añade a this.incidencias: { idIncidencia: this.siguienteIdIncidencia++, titulo, prioridad, solicitante, estado: "abierta", idTecnico: null, solucion: "" }.
+Devuelve un string de éxito que incluya el id.
+asignar(idIncidencia, idTecnico):
+Usa this.buscarIncidencia(...). Si es null, devuelve "Incidencia no encontrada".
+Usa this.buscarTecnico(...). Si es null, devuelve "Técnico no encontrado".
+Si estado !== "abierta", devuelve "Solo se pueden asignar incidencias abiertas".
+Recorre this.incidencias y cuenta las que tiene ese técnico con estado === "en curso". Si ya tiene this.limiteActivas o más, devuelve "Técnico sobrecargado".
+Pone estado = "en curso" y idTecnico = idTecnico en la incidencia.
+Devuelve un string de confirmación.
+resolver(idIncidencia, solucion):
+Si solucion === "", devuelve "Solución no válida".
+Busca con for i. Si no existe, "Incidencia no encontrada".
+Si estado !== "en curso", devuelve "La incidencia no está en curso".
+Pone estado = "resuelta" y guarda la solucion.
+No se borra: el histórico cuenta en los informes.
+incidenciasPorEstado(estado):
+Devuelve un array con copias ({ ...incidencia }) de las incidencias con ese estado.
+informe():
+Devuelve un objeto con estos campos:
+abiertas: número de incidencias abiertas.
+enCurso: número de incidencias en curso.
+resueltas: número de incidencias resueltas.
+tecnicoEstrella: el nombre del técnico con más incidencias resueltas, o "Sin resueltas" si no hay ninguna.
+
+
+
+function Helpdesk() {
+    this.tecnicos = [];
+    this.incidencias = [];
+    this.siguienteIdTecnico = 1;
+    this.siguienteIdIncidencia = 1;
+    this.limiteActivas = 3;
+}
+
+Helpdesk.prototype.agregarTecnico = function (nombre, area) {
+    if (nombre === "" || area === "") {
+        return "Datos no válidos";
+    }
+    for (let tecnico of this.tecnicos) {
+        if (tecnico.nombre === nombre) {
+            return "Técnico ya registrado";
+        }
+    }
+    this.tecnicos.push({ id: this.siguienteIdTecnico++, nombre, area });
+    return `Técnico ${nombre} registrado en el área ${area}`;
+};
+
+Helpdesk.prototype.buscarTecnico = function (id) {
+    for (let tecnico of this.tecnicos) {
+        if (tecnico.id === id) {
+            return tecnico;
+        }
+    }
+    return null;
+};
+
+Helpdesk.prototype.buscarIncidencia = function (id) {
+    for (let incidencia of this.incidencias) {
+        // ERROR: `incidencia.id` no existe, la propiedad es `idIncidencia`
+        // (la que pusiste en el push). Devolvía siempre null.
+        // CORRECCIÓN: copiar el nombre exacto del push.
+        if (incidencia.idIncidencia === id) {
+            return incidencia;
+        }
+    }
+    return null;
+};
+
+Helpdesk.prototype.crearIncidencia = function (titulo, prioridad, solicitante) {
+    if (titulo === "" || solicitante === "") {
+        return "Datos no válidos";
+    }
+    // ERROR: la condición estaba invertida. Devolvía error cuando la prioridad
+    // ERA válida, así que nunca se creaba ninguna incidencia.
+    // CORRECCIÓN: error si NO es ninguna de las tres (!== con &&).
+    if (prioridad !== "baja" && prioridad !== "media" && prioridad !== "alta") {
+        return "Prioridad no válida";
+    }
+    for (let incidencia of this.incidencias) {
+        if (incidencia.titulo === titulo && incidencia.solicitante === solicitante && incidencia.estado !== "resuelta") {
+            return "Incidencia duplicada";
+        }
+    }
+
+    // ERROR: `this.incidencias.idIncidencia` (el array no tiene idIncidencia)
+    // daba undefined.
+    // CORRECCIÓN: guardar el id en una variable ANTES del push.
+    let id = this.siguienteIdIncidencia++;
+    this.incidencias.push({
+        idIncidencia: id,
+        titulo,
+        prioridad,
+        solicitante,
+        estado: "abierta",
+        idTecnico: null,
+        solucion: ""
+    });
+    return `Incidencia registrada con id ${id}`;
+};
+
+Helpdesk.prototype.asignar = function (idIncidencia, idTecnico) {
+    let incidencia = this.buscarIncidencia(idIncidencia);
+    if (incidencia === null) {
+        return "Incidencia no encontrada";
+    }
+    let tecnico = this.buscarTecnico(idTecnico);
+    if (tecnico === null) {
+        return "Técnico no encontrado";
+    }
+    if (incidencia.estado !== "abierta") {
+        return "Solo se pueden asignar incidencias abiertas";
+    }
+
+    // ERROR: mirabas `incidencia.limiteActivas`, que no existe, y no contabas
+    // nada del técnico.
+    // CORRECCIÓN: contar las incidencias "en curso" de ESTE técnico y comparar
+    // con this.limiteActivas (el límite está en el constructor, con this.).
+    let activas = 0;
+    for (let otra of this.incidencias) {
+        if (otra.estado === "en curso" && otra.idTecnico === idTecnico) {
+            activas++;
+        }
+    }
+    if (activas >= this.limiteActivas) {
+        return "Técnico sobrecargado";
+    }
+
+    // ERROR: `this.incidencias.push({ estado, idTecnico })` añadía un objeto
+    // nuevo y casi vacío al array en vez de cambiar la incidencia.
+    // CORRECCIÓN: modificar el objeto encontrado.
+    incidencia.estado = "en curso";
+    incidencia.idTecnico = idTecnico;
+    return `Incidencia ${idIncidencia} asignada a ${tecnico.nombre}`;
+};
+
+Helpdesk.prototype.resolver = function (idIncidencia, solucion) {
+    if (solucion === "") {
+        return "Solución no válida";
+    }
+    for (let i = 0; i < this.incidencias.length; i++) {
+        if (this.incidencias[i].idIncidencia === idIncidencia) {
+            if (this.incidencias[i].estado !== "en curso") {
+                return "La incidencia no está en curso";
+            }
+            // ERROR: `push({ estado, solucion })` añadía un objeto nuevo y la
+            // incidencia original seguía "en curso".
+            // CORRECCIÓN: asignar los valores a la incidencia encontrada.
+            this.incidencias[i].estado = "resuelta";
+            this.incidencias[i].solucion = solucion;
+            return "Incidencia resuelta";
+        }
+    }
+    return "Incidencia no encontrada";
+};
+
+Helpdesk.prototype.incidenciasPorEstado = function (estado) {
+    let resultado = [];
+    for (let incidencia of this.incidencias) {
+        if (incidencia.estado === estado) {
+            // ERROR: `push(...incidencia)` lanzaba TypeError (un objeto no se
+            // puede expandir dentro de push).
+            // CORRECCIÓN: push de una COPIA { ...incidencia }.
+            resultado.push({ ...incidencia });
+        }
+    }
+    return resultado;
+};
+
+Helpdesk.prototype.informe = function () {
+    let abiertas = 0;
+    let enCurso = 0;
+    let resueltas = 0;
+
+    for (let incidencia of this.incidencias) {
+        if (incidencia.estado === "abierta") {
+            abiertas++;
+        }
+        if (incidencia.estado === "en curso") {
+            enCurso++;
+        }
+        if (incidencia.estado === "resuelta") {
+            resueltas++;
+        }
+    }
+
+    // FALTABA: tecnicoEstrella (patrón "el que más": por cada técnico,
+    // contar sus incidencias resueltas).
+    let maximo = 0;
+    let tecnicoEstrella = "Sin resueltas";
+    for (let tecnico of this.tecnicos) {
+        let contador = 0;
+        for (let incidencia of this.incidencias) {
+            if (incidencia.idTecnico === tecnico.id && incidencia.estado === "resuelta") {
+                contador++;
+            }
+        }
+        if (contador > maximo) {
+            maximo = contador;
+            tecnicoEstrella = tecnico.nombre;
+        }
+    }
+
+    return { abiertas, enCurso, resueltas, tecnicoEstrella };
+};
+
+// === PRUEBAS ===
+const hd = new Helpdesk();
+
+console.log(hd.agregarTecnico("Marta", "Redes"));          // id 1
+console.log(hd.agregarTecnico("Pablo", "Software"));       // id 2
+console.log(hd.agregarTecnico("Marta", "Sistemas"));       // Técnico ya registrado
+console.log(hd.agregarTecnico("", "Redes"));               // Datos no válidos
+
+console.log(hd.buscarTecnico(1));                          // objeto Marta
+console.log(hd.buscarTecnico(99));                         // null
+
+console.log(hd.crearIncidencia("No hay wifi", "alta", "Ana"));            // id 1
+console.log(hd.crearIncidencia("No hay wifi", "alta", "Ana"));            // Incidencia duplicada
+console.log(hd.crearIncidencia("Impresora atascada", "urgente", "Luis")); // Prioridad no válida
+console.log(hd.crearIncidencia("", "baja", "Luis"));                      // Datos no válidos
+console.log(hd.crearIncidencia("Impresora atascada", "baja", "Luis"));    // id 2
+console.log(hd.crearIncidencia("Error en la factura", "media", "Eva"));   // id 3
+console.log(hd.crearIncidencia("VPN caída", "alta", "Eva"));              // id 4
+console.log(hd.crearIncidencia("Correo lento", "baja", "Ana"));           // id 5
+
+console.log(hd.buscarIncidencia(1));                       // objeto "No hay wifi"
+console.log(hd.buscarIncidencia(99));                      // null
+
+console.log(hd.asignar(1, 1));                             // éxito (Marta: 1)
+console.log(hd.asignar(1, 2));                             // Solo se pueden asignar incidencias abiertas
+console.log(hd.asignar(99, 1));                            // Incidencia no encontrada
+console.log(hd.asignar(2, 99));                            // Técnico no encontrado
+console.log(hd.asignar(2, 1));                             // éxito (Marta: 2)
+console.log(hd.asignar(3, 1));                             // éxito (Marta: 3)
+console.log(hd.asignar(4, 1));                             // Técnico sobrecargado
+console.log(hd.asignar(4, 2));                             // éxito (Pablo: 1)
+
+console.log(hd.resolver(1, ""));                           // Solución no válida
+console.log(hd.resolver(1, "Router reiniciado"));          // éxito
+console.log(hd.resolver(1, "Otra solución"));              // La incidencia no está en curso
+console.log(hd.resolver(5, "Probado"));                    // La incidencia no está en curso
+console.log(hd.resolver(99, "Probado"));                   // Incidencia no encontrada
+console.log(hd.resolver(2, "Papel retirado"));             // éxito
+
+console.log(hd.incidenciasPorEstado("abierta"));           // solo la 5
+console.log(hd.incidenciasPorEstado("en curso"));          // la 3 y la 4
+
+console.log(hd.informe());
+// { abiertas: 1, enCurso: 2, resueltas: 2, tecnicoEstrella: "Marta" }
+
+console.log(hd.crearIncidencia("No hay wifi", "alta", "Ana"));   // id 6 (la 1 ya está resuelta)
+console.log(hd.asignar(5, 1));                                   // éxito (Marta: 2 en curso)                  // éxito (Marta: 2 en curso)
+
+ */
+
+/*Ejercicio 12 => Esto es de lo más habitual en el departamento de recursos humanos de cualquier empresa: los empleados piden vacaciones, alguien las aprueba o las rechaza, se descuentan días del saldo y se sacan informes de costes. Lo ves en herramientas como Factorial, BambooHR o en un Excel de RRHH.
+
+Crea una función constructora RRHH() (se usa con new).
+
+En el constructor (con this.):
+
+this.empleados = [];
+this.solicitudes = [];
+this.siguienteIdEmpleado = 1;
+this.siguienteIdSolicitud = 1;
+this.diasAnuales = 22; (días de vacaciones que tiene cada empleado al entrar)
+
+En el prototype, estos ocho métodos:
+
+agregarEmpleado(nombre, departamento, salario):
+Si nombre === "" o departamento === "", devuelve "Datos no válidos".
+Si ya existe un empleado con ese nombre, devuelve "Empleado ya registrado" (recorre con for of).
+Si salario <= 0, devuelve "Salario no válido".
+Añade a this.empleados: { id: this.siguienteIdEmpleado++, nombre, departamento, salario, diasDisponibles: this.diasAnuales }.
+Devuelve un string de confirmación.
+buscarEmpleado(id):
+Recorre this.empleados con for of.
+Devuelve el objeto empleado si lo encuentra, o null si no.
+solicitarVacaciones(idEmpleado, dias):
+Usa this.buscarEmpleado(...). Si es null, devuelve "Empleado no encontrado".
+Si dias <= 0, devuelve "Días no válidos".
+Si dias > diasDisponibles del empleado, devuelve "Días insuficientes".
+Recorre this.solicitudes y, si ese empleado ya tiene una con estado === "pendiente", devuelve "Ya tiene una solicitud pendiente".
+Añade a this.solicitudes: { idSolicitud: this.siguienteIdSolicitud++, idEmpleado, dias, estado: "pendiente" }.
+Devuelve un string de éxito que incluya el id de la solicitud.
+No se descuentan días todavía: eso ocurre al aprobar.
+resolverSolicitud(idSolicitud, aprobada):
+Busca con for i. Si no existe, "Solicitud no encontrada".
+Si estado !== "pendiente", devuelve "La solicitud ya está resuelta".
+Si aprobada === true: pone estado = "aprobada" y resta los días a diasDisponibles del empleado (usa this.buscarEmpleado(...)).
+Si aprobada es false: pone estado = "rechazada" y no toca los días.
+Devuelve un string de confirmación.
+No se borra la solicitud: el histórico cuenta en los informes.
+cancelarSolicitud(idSolicitud):
+Busca con for i. Si no existe, "Solicitud no encontrada".
+Si estado !== "pendiente", devuelve "Solo se pueden cancelar solicitudes pendientes".
+Bórrala con .splice() y devuelve confirmación.
+solicitudesDeEmpleado(idEmpleado):
+Devuelve un array con copias ({ ...solicitud }) de todas las solicitudes de ese empleado (de cualquier estado).
+costeDepartamento(departamento):
+Devuelve la suma de los salarios de los empleados de ese departamento (un número, 0 si no hay ninguno).
+empleadoMasVacaciones():
+Para cada empleado, suma los dias de sus solicitudes aprobadas.
+Devuelve el nombre del que más días lleva, o "Sin vacaciones" si ninguna se ha aprobado.
+
+
+
+function RRHH() {
+    this.empleados = [];
+    this.solicitudes = [];
+    this.siguienteIdEmpleado = 1;
+    this.siguienteIdSolicitud = 1;
+    this.diasAnuales = 22;
+}
+
+RRHH.prototype.agregarEmpleado = function (nombre, departamento, salario) {
+    if (nombre === "" || departamento === "") {
+        return "Datos no válidos";
+    }
+    for (let empleado of this.empleados) {
+        if (empleado.nombre === nombre) {
+            return "Empleado ya registrado";
+        }
+    }
+    if (salario <= 0) {
+        return "Salario no válido";
+    }
+    this.empleados.push({
+        id: this.siguienteIdEmpleado++,
+        nombre,
+        departamento,
+        salario,
+        diasDisponibles: this.diasAnuales
+    });
+    return `Empleado ${nombre} registrado con éxito`;
+};
+
+RRHH.prototype.buscarEmpleado = function (id) {
+    for (let empleado of this.empleados) {
+        if (empleado.id === id) {
+            return empleado;
+        }
+    }
+    return null;
+};
+
+RRHH.prototype.solicitarVacaciones = function (idEmpleado, dias) {
+    let empleado = this.buscarEmpleado(idEmpleado);
+    if (empleado === null) {
+        return "Empleado no encontrado";
+    }
+    if (dias <= 0) {
+        return "Días no válidos";
+    }
+    // ERROR: `this.empleados.diasDisponibles` (el array no tiene esa propiedad,
+    // da undefined y la comparación nunca se cumplía).
+    // CORRECCIÓN: usar el empleado encontrado.
+    if (dias > empleado.diasDisponibles) {
+        return "Días insuficientes";
+    }
+    for (let solicitud of this.solicitudes) {
+        // ERROR: faltaba comprobar de qué empleado es la solicitud. Así, la
+        // pendiente de uno bloqueaba a todos los demás.
+        // CORRECCIÓN: comparar también solicitud.idEmpleado === idEmpleado.
+        if (solicitud.idEmpleado === idEmpleado && solicitud.estado === "pendiente") {
+            return "Ya tiene una solicitud pendiente";
+        }
+    }
+
+    // ERROR: `this.solicitudes.idSolicitud` daba undefined.
+    // CORRECCIÓN: guardar el id en una variable ANTES del push.
+    let id = this.siguienteIdSolicitud++;
+    this.solicitudes.push({ idSolicitud: id, idEmpleado, dias, estado: "pendiente" });
+    return `Solicitud ${id} registrada con éxito`;
+};
+
+RRHH.prototype.resolverSolicitud = function (idSolicitud, aprobada) {
+    for (let i = 0; i < this.solicitudes.length; i++) {
+        if (this.solicitudes[i].idSolicitud === idSolicitud) {
+            if (this.solicitudes[i].estado !== "pendiente") {
+                return "La solicitud ya está resuelta";
+            }
+            if (aprobada === true) {
+                // ERROR: `this.buscarEmpleado(idSolicitud)` buscaba un empleado
+                // con el id de una SOLICITUD.
+                // CORRECCIÓN: usar el idEmpleado guardado en la solicitud.
+                let empleado = this.buscarEmpleado(this.solicitudes[i].idEmpleado);
+                // ERROR: `buscador.dias--` restaba 1 a una propiedad que no existe.
+                // CORRECCIÓN: restar los días de la solicitud a diasDisponibles.
+                empleado.diasDisponibles -= this.solicitudes[i].dias;
+                // ERROR: nunca se cambiaba el estado de la solicitud.
+                this.solicitudes[i].estado = "aprobada";
+                return "Solicitud aprobada";
+            }
+            this.solicitudes[i].estado = "rechazada";
+            return "Solicitud rechazada";
+        }
+    }
+    return "Solicitud no encontrada";
+};
+
+RRHH.prototype.cancelarSolicitud = function (idSolicitud) {
+    for (let i = 0; i < this.solicitudes.length; i++) {
+        // ERROR: no comparabas el idSolicitud, así que actuabas sobre la
+        // primera solicitud del array, fuera la que fuera.
+        // CORRECCIÓN: actuar SOLO cuando el id coincide.
+        if (this.solicitudes[i].idSolicitud === idSolicitud) {
+            if (this.solicitudes[i].estado !== "pendiente") {
+                return "Solo se pueden cancelar solicitudes pendientes";
+            }
+            this.solicitudes.splice(i, 1);
+            return "Solicitud cancelada";
+        }
+    }
+    return "Solicitud no encontrada";
+};
+
+RRHH.prototype.solicitudesDeEmpleado = function (idEmpleado) {
+    let copia = [];
+    for (let solicitud of this.solicitudes) {
+        // ERROR: no filtrabas por empleado y excluías las rechazadas.
+        // CORRECCIÓN: filtrar por idEmpleado, de cualquier estado.
+        if (solicitud.idEmpleado === idEmpleado) {
+            copia.push({ ...solicitud });
+        }
+    }
+    return copia;
+};
+
+RRHH.prototype.costeDepartamento = function (departamento) {
+    let suma = 0;
+    for (let empleado of this.empleados) {
+        if (empleado.departamento === departamento) {
+            suma += empleado.salario;
+        }
+    }
+    return suma;
+};
+
+RRHH.prototype.empleadoMasVacaciones = function () {
+    let maximo = 0;
+    // ERROR: la variable `empleado` del resultado y la del bucle se llamaban
+    // igual, y `empleado = empleado.nombre` cambiaba la del bucle, así que
+    // siempre devolvía "Sin vacaciones".
+    // CORRECCIÓN: nombre distinto para el resultado.
+    let nombre = "Sin vacaciones";
+    for (let empleado of this.empleados) {
+        let dias = 0;
+        for (let solicitud of this.solicitudes) {
+            // ERROR: `solicitud.estado === empleado.id` comparaba un estado
+            // con un id.
+            // CORRECCIÓN: comparar solicitud.idEmpleado con empleado.id.
+            if (solicitud.idEmpleado === empleado.id && solicitud.estado === "aprobada") {
+                // ERROR: `contador++` contaba solicitudes; el enunciado pide
+                // sumar DÍAS.
+                dias += solicitud.dias;
+            }
+        }
+        if (dias > maximo) {
+            maximo = dias;
+            nombre = empleado.nombre;
+        }
+    }
+    return nombre;
+};
+
+// === PRUEBAS ===
+const rrhh = new RRHH();
+
+console.log(rrhh.agregarEmpleado("Ana", "Ventas", 1800));     // id 1
+console.log(rrhh.agregarEmpleado("Luis", "IT", 2500));        // id 2
+console.log(rrhh.agregarEmpleado("Eva", "IT", 2800));         // id 3
+console.log(rrhh.agregarEmpleado("Ana", "IT", 2000));         // Empleado ya registrado
+console.log(rrhh.agregarEmpleado("", "IT", 2000));            // Datos no válidos
+console.log(rrhh.agregarEmpleado("Pablo", "Ventas", 0));      // Salario no válido
+
+console.log(rrhh.buscarEmpleado(1));                          // objeto Ana (22 días)
+console.log(rrhh.buscarEmpleado(99));                         // null
+
+console.log(rrhh.empleadoMasVacaciones());                    // Sin vacaciones
+
+console.log(rrhh.solicitarVacaciones(1, 10));                 // solicitud 1
+console.log(rrhh.solicitarVacaciones(1, 5));                  // Ya tiene una solicitud pendiente
+console.log(rrhh.solicitarVacaciones(1, 0));                  // Días no válidos
+console.log(rrhh.solicitarVacaciones(1, 30));                 // Días insuficientes
+console.log(rrhh.solicitarVacaciones(99, 5));                 // Empleado no encontrado
+console.log(rrhh.solicitarVacaciones(2, 15));                 // solicitud 2
+console.log(rrhh.solicitarVacaciones(3, 8));                  // solicitud 3
+
+console.log(rrhh.resolverSolicitud(1, true));                 // aprobada (Ana: 12 días)
+console.log(rrhh.resolverSolicitud(1, true));                 // La solicitud ya está resuelta
+console.log(rrhh.resolverSolicitud(99, true));                // Solicitud no encontrada
+console.log(rrhh.resolverSolicitud(2, false));                // rechazada (Luis sigue con 22)
+console.log(rrhh.resolverSolicitud(3, true));                 // aprobada (Eva: 14 días)
+
+console.log(rrhh.cancelarSolicitud(1));                       // Solo se pueden cancelar pendientes
+console.log(rrhh.cancelarSolicitud(99));                      // Solicitud no encontrada
+console.log(rrhh.solicitarVacaciones(2, 6));                  // solicitud 4
+console.log(rrhh.cancelarSolicitud(4));                       // confirmación
+
+console.log(rrhh.solicitarVacaciones(1, 13));                 // Días insuficientes (quedan 12)
+console.log(rrhh.solicitarVacaciones(1, 12));                 // solicitud 5
+console.log(rrhh.resolverSolicitud(5, true));                 // aprobada (Ana: 0 días)
+
+console.log(rrhh.solicitudesDeEmpleado(1));                   // solicitudes 1 y 5
+console.log(rrhh.solicitudesDeEmpleado(99));                  // []
+
+console.log(rrhh.costeDepartamento("IT"));                    // 5300
+console.log(rrhh.costeDepartamento("Ventas"));                // 1800
+console.log(rrhh.costeDepartamento("Legal"));                 // 0
+
+console.log(rrhh.empleadoMasVacaciones());                    // Ana (22 días contra 8 de Eva)
+
+ */
+
+
+/*###########EJERCICIOS CON DIFICULTAD SIMILAR A LA DE LOS DE CLASE PARA EL EXAMEN###########*/
+
+/*EJERCICIO 1 =>Escribe una función llamada “contarEstados” que reciba un array de strings con el estado de varias incidencias de soporte y retorne un objeto con cuántas hay de cada estado.
+
+Usa reduce() y el operador spread (...)
+
+contarEstados(["abierta", "resuelta", "abierta", "en curso", "abierta"])
+-> { abierta: 3, resuelta: 1, "en curso": 1 }
+
+contarEstados([]) -> {}
+
+
+
+function contarEstados(estados) {
+    return estados.reduce((acumulador, estado) => {
+        return { ...acumulador, [estado]: (acumulador[estado] || 0) + 1 };
+    }, {});
+}
+
+console.log(contarEstados(["abierta", "resuelta", "abierta", "en curso", "abierta"]));
+
+console.log(contarEstados([]));
+
+ */
+
+/*EJERCICIO 2 => Tienes este array de empleados:
+
+const empleados = [
+    {nombre: "Ana", departamento: "Ventas", salario: 1800, activo: true},
+    {nombre: "Luis", departamento: "IT", salario: 2500, activo: true},
+    {nombre: "Eva", departamento: "IT", salario: 2800, activo: false},
+    {nombre: "Pablo", departamento: "Ventas", salario: 2000, activo: true},
+    {nombre: "Marta", departamento: "IT", salario: 3100, activo: true},
+];
+
+a) Filtra solo los empleados activos y retorna un array con sus nombres en mayúsculas
+Resultado esperado: ["ANA", "LUIS", "PABLO", "MARTA"]
+
+b) Calcula el coste total en salarios de todos los empleados activos.
+Resultado esperado: 9400
+
+c) Devuelve el empleado con el salario más alto de toda la lista (activo o no).
+Resultado esperado: {nombre: "Marta", departamento: "IT", salario: 3100, activo: true}
+
+
+
+const empleados = [
+    {nombre: "Ana", departamento: "Ventas", salario: 1800, activo: true},
+    {nombre: "Luis", departamento: "IT", salario: 2500, activo: true},
+    {nombre: "Eva", departamento: "IT", salario: 2800, activo: false},
+    {nombre: "Pablo", departamento: "Ventas", salario: 2000, activo: true},
+    {nombre: "Marta", departamento: "IT", salario: 3100, activo: true},
+];
+
+//FILTRADO DE EMPLEADOS ACTIVOS
+let activos =[];
+for(let empleado of empleados) {
+    if(empleado.activo===true){
+        activos.push(empleado.nombre.toUpperCase());
+    }
+}
+console.log(activos);
+
+//COSTE SALARIO DE TODOS LOS ECMPLEADOS ACTIVOS
+let suma =0;
+for(let empleado of empleados) {
+    if(empleado.activo===true){
+        suma+=empleado.salario
+    }
+}
+console.log(suma);
+
+//SALARIO MAS ALTO
+function salarioMasAlto(empleados) {
+    let masSalario = empleados[0];
+
+    for (let empleado of empleados) {
+        if (empleado.salario > masSalario.salario) {
+            masSalario = empleado;
+        }
+    }
+
+    return masSalario;
+}
+
+
+
+console.log(salarioMasAlto(empleados));
+
+ */
+
+/*EJERCICIO 3 => Tienes este array de pedidos de clientes, donde lineas son los importes de cada línea del pedido:
+
+const pedidos = [
+    {cliente: "Acme", lineas: [120, 80, 50]},
+    {cliente: "Beta", lineas: [30, 20]},
+    {cliente: "Gamma", lineas: [500, 250, 300, 100]},
+    {cliente: "Delta", lineas: [15, 25, 10]},
+    {cliente: "Omega", lineas: [200, 150]},
+];
+
+a) Crea un nuevo array donde cada elemento sea un objeto con el nombre del cliente, el total del pedido y la media por línea (redondeada a 2 decimales)
+
+Resultado esperado:
+[
+  {cliente: "Acme", total: 250, mediaLinea: 83.33},
+  {cliente: "Beta", total: 50, mediaLinea: 25},
+  {cliente: "Gamma", total: 1150, mediaLinea: 287.5},
+  {cliente: "Delta", total: 50, mediaLinea: 16.67},
+  {cliente: "Omega", total: 350, mediaLinea: 175}
+]
+
+b) Filtra y devuelve solo los nombres de los clientes con un total de pedido >= 200.
+Resultado esperado: ["Acme", "Gamma", "Omega"]
+
+c) ¿Algún pedido tiene alguna línea de 500 o más? Retorna true o false usando un método de iteración avanzado.
+Resultado esperado: true
+
+d) ¿Todos los pedidos tienen al menos 2 líneas? Retorna true o false usando un método de iteración avanzado.
+Resultado esperado: true
+
+
+const pedidos = [
+    {cliente: "Acme", lineas: [120, 80, 50]},
+    {cliente: "Beta", lineas: [30, 20]},
+    {cliente: "Gamma", lineas: [500, 250, 300, 100]},
+    {cliente: "Delta", lineas: [15, 25, 10]},
+    {cliente: "Omega", lineas: [200, 150]},
+];
+//Nuevo Array
+let array = [];
+pedidos.forEach(pedido => {
+    let suma = 0;
+    pedido.lineas.forEach(linea => {
+        suma += linea;
+    });
+
+    let media = suma / pedido.lineas.length;
+
+    array.push({
+        nombre: pedido.cliente,
+        total: suma,
+        mediaLinea: Number(media.toFixed(2))
+    });
+});
+console.log(array);
+
+//Filtrar cliente
+let total=[];
+for (let arr of array) {
+    if(arr.total>=200){
+        total.push(arr.nombre);
+    }
+}
+console.log(total);
+
+//Mas 500 lineas
+const hayLineaGrande = pedidos.some(pedido =>
+    pedido.lineas.some(linea => linea >= 500)
+);
+console.log(hayLineaGrande);
+
+//Almenos dos lineas
+const almenos2Lineas = pedidos.some(pedido=> pedido.lineas.some(linea => linea>=2) )
+console.log(almenos2Lineas);
+
+ */
+
+/*EJERCICIO 4 => Crea una función llamada “crearColaAtencion” que implemente una cola (primero en llegar, primero en ser atendido) para un servicio de atención al cliente, usando un closure.
+
+La función principal (crearColaAtencion) NO DEBE recibir parámetros y debe retornar un objeto JSON con estos métodos:
+
+encolar(cliente) => añade el cliente al final de la cola.
+atender() => elimina y retorna el cliente que lleva más tiempo esperando (el primero). Si la cola está vacía retorna null.
+siguiente() => devuelve el cliente que será atendido a continuación sin eliminarlo. Si está vacía retorna null.
+tamano() => retorna el número de clientes que hay esperando.
+
+
+
+function crearColaAtencion(){
+    let cola = [];
+
+    return {
+        encolar: function(nombre) {
+            return cola.push(nombre);
+        },
+        atender: function() {
+            // Mantenemos tu idea de usar splice, pero indicando el índice 0 (el primero que llegó)
+            return cola.length === 0 ? null : cola.splice(0, 1)[0];
+        },
+        siguiente: function() {
+            // El cliente que será atendido a continuación es siempre el que está en la primera posición (índice 0)
+            return cola.length === 0 ? null : cola[0];
+        },
+        tamano: function() {
+            return cola.length;
+        }
+    };
+}
+
+// Pruebas con tu código
+const cola = crearColaAtencion();
+cola.encolar("Ana");
+cola.encolar("Luis");
+cola.encolar("Eva");
+
+console.log(cola.siguiente()); // "Ana"
+console.log(cola.atender());   // "Ana"
+
+console.log(cola.siguiente()); // "Luis"
+console.log(cola.tamano());    // 2
+console.log(cola.atender());   // "Luis"
+console.log(cola.atender());   // "Eva"
+console.log(cola.atender());   // null
+
+ */
+
+/*EJERCICIO 5 CLASES => Crea una clase llamada “CajaChica” con:
+
+constructor(responsable, saldoInicial). Guarda el responsable y el saldo. El historial empieza vacío.
+ingresar(cantidad) => Suma la cantidad al saldo y guarda en el historial:
+“Ingreso: +100 | Saldo: 400”
+gastar(cantidad, concepto) => Resta la cantidad al saldo si hay fondos suficientes y guarda en el historial.
+“Gasto: -50 (Material de oficina) | Saldo: 350”
+Si no hay fondos, muestra por consola: “Fondos insuficientes” y NO guardes nada en el historial.
+verHistorial() => imprime por consola cada movimiento del historial numerado:
+“1. Ingreso: +100 | Saldo: 400”
+“2. Gasto: -50 (Material de oficina) | Saldo: 350”
+“3. Ingreso: +20 | Saldo: 370”
+“4. Gasto: -170 (Cena con cliente) | Saldo: 200”
+get saldoActual() => Getter que retorna el saldo actual.
+
+
+
+class CajaChica {
+    constructor(responsable, saldoInicial) {
+        this.responsable = responsable;
+        this.saldo = saldoInicial;
+        this.historial = [];
+    }
+
+    ingresar(cantidad) {
+        this.saldo += cantidad;
+        this.historial.push(`Ingreso: +${cantidad} | Saldo: ${this.saldo}`);
+    }
+
+    gastar(cantidad, concepto) {
+        // Validamos si hay fondos suficientes
+        if (this.saldo < cantidad) {
+            console.log("Fondos insuficientes");
+
+        }else {
+
+        this.saldo -= cantidad;
+        this.historial.push(`Gasto: -${cantidad} (${concepto}) | Saldo: ${this.saldo}`);
+        }
+    }
+
+    verHistorial() {
+        this.historial.forEach((movimiento, index) => {
+            console.log(`${index + 1}. ${movimiento}`);
+        });
+    }
+
+    get saldoActual() {
+        return this.saldo;
+    }
+}
+
+// --- Comprobación con el ejemplo ---
+const caja = new CajaChica("Marta", 300);
+caja.ingresar(100);
+caja.gastar(50, "Material de oficina");
+caja.gastar(900, "Portátil"); // Fondos insuficientes
+console.log(caja.saldoActual); // 350
+caja.ingresar(20);
+caja.gastar(170, "Cena con cliente");
+caja.verHistorial();
+
+ */
+
+/*EJERCICIO 6 =>Escribe una función llamada "agruparPorCategoria" que reciba un array de objetos de productos y los agrupe en un objeto JSON donde las
+claves sean las categorías y los valores sean arrays con los nombres de los productos de esa categoría.Usa reduce().
+
+
+const productos = [
+    { nombre: "Manzana", categoria: "fruta" },
+    { nombre: "Camisa", categoria: "ropa" },
+    { nombre: "Plátano", categoria: "fruta" },
+    { nombre: "Pantalón", categoria: "ropa" },
+    { nombre: "Televisor", categoria: "tecnologia" }
+];
+function agruparPorCategoria(productos) {
+    return productos.reduce((acumulador, producto) => {
+        // 1. Si la categoría aún no existe en nuestro objeto acumulador, la creamos con un array vacío
+        if (!acumulador[producto.categoria]) {
+            acumulador[producto.categoria] = [];
+        }
+
+        // 2. Metemos el nombre del producto dentro del array de su categoría
+        acumulador[producto.categoria].push(producto.nombre);
+
+        // 3. Retornamos el acumulador para la siguiente vuelta
+        return acumulador;
+    }, {}); // 👈 ¡Súper importante! El objeto vacío {} al final es el valor inicial del acumulador
+}
+
+console.log(agruparPorCategoria(productos));
+
+ */
+
+/*EJERCICIO 7 =>Tienes este array de empleados:
+
+JavaScript
+const empleados = [
+    { nombre: "Carlos", departamento: "IT", salario: 3000, activo: true },
+    { nombre: "Lucía", departamento: "HR", salario: 1800, activo: false },
+    { nombre: "Miguel", departamento: "IT", salario: 3500, activo: true },
+    { nombre: "Elena", departamento: "Ventas", salario: 2200, activo: true },
+    { nombre: "Sofía", departamento: "HR", salario: 2000, activo: true },
+];
+a) Utiliza filter() y map() para filtrar solo los empleados que estén activos (true) y retornar un array con sus nombres en mayúsculas.
+
+b) Utiliza filter() y reduce() para calcular el coste total en salarios de todos los empleados activos del departamento de "IT".
+
+c) Utiliza reduce() para encontrar y devolver el objeto del empleado con el salario más alto de toda la lista (con o sin activo).
+
+
+
+const empleados = [
+    { nombre: "Carlos", departamento: "IT", salario: 3000, activo: true },
+    { nombre: "Lucía", departamento: "HR", salario: 1800, activo: false },
+    { nombre: "Miguel", departamento: "IT", salario: 3500, activo: true },
+    { nombre: "Elena", departamento: "Ventas", salario: 2200, activo: true },
+    { nombre: "Sofía", departamento: "HR", salario: 2000, activo: true },
+];
+//APARTADO A
+const resultado =empleados.filter(empleado => {
+    if(empleado.activo === true) {
+       return true;
+    }
+}).map((empleado) => {return empleado.nombre.toUpperCase()})
+
+console.log(resultado);
+
+//APARTADO B
+const calculadora = empleados.filter(empleado => {
+    if(empleado.departamento === "IT" && empleado.activo === true) {
+        return true;
+    }
+}).reduce((acumulador, empleado) => {
+    return acumulador + empleado.salario;
+}, 0);
+
+console.log(calculadora);
+
+//APARTADO C
+const empleadoMaxSalario = empleados.reduce((maximo, empleado) => {
+    if (empleado.salario > maximo.salario) {
+        return empleado;
+    }
+    return maximo;
+});
+
+console.log(empleadoMaxSalario);
+
+ */
