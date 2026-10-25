@@ -8585,3 +8585,535 @@ const empleadoMaxSalario = empleados.reduce((maximo, empleado) => {
 console.log(empleadoMaxSalario);
 
  */
+
+
+/*EJERCICIOO 8 => Escribe una función llamada “agruparPorDepartamento” que reciba un array de empleados y retorne un objeto donde cada clave sea un departamento y su valor sea un array con los nombres de los empleados de ese departamento.
+
+Usa reduce() y el operador spread (...)
+
+agruparPorDepartamento([
+    {nombre: "Ana", departamento: "Ventas"},
+    {nombre: "Luis", departamento: "IT"},
+    {nombre: "Eva", departamento: "IT"}
+])
+-> { Ventas: ["Ana"], IT: ["Luis", "Eva"] }
+
+agruparPorDepartamento([]) -> {}
+
+ *
+
+const departamentos = [
+    {nombre: "Ana", departamento: "Ventas"},
+    {nombre: "Luis", departamento: "IT"},
+    {nombre: "Eva", departamento: "IT"}
+]
+
+function  agrupar(departamentos) {
+    return departamentos.reduce((acumulador,departamentos) => {
+        if(!acumulador[departamentos.departamento]) {
+            acumulador[departamentos.departamento] = [];
+        }
+        acumulador[departamentos.departamento].push(departamentos.nombre);
+        return acumulador;
+    },{})
+}
+console.log(agrupar(departamentos));
+
+ */
+
+/*EJERCICIO 9 => Tienes este array de ventas:
+
+const ventas = [
+    {producto: "Portátil", importe: 900, vendedor: "Ana", cobrada: true},
+    {producto: "Ratón", importe: 20, vendedor: "Luis", cobrada: false},
+    {producto: "Monitor", importe: 250, vendedor: "Ana", cobrada: true},
+    {producto: "Teclado", importe: 45, vendedor: "Eva", cobrada: true},
+    {producto: "Cable", importe: 5, vendedor: "Luis", cobrada: false},
+];
+
+a) Filtra las ventas pendientes de cobro (cobrada: false) y retorna un array con el nombre de sus productos en minúsculas.
+Resultado esperado: ["ratón", "cable"]
+
+b) Calcula el importe total ya cobrado.
+Resultado esperado: 1195
+
+c) Devuelve la venta de menor importe de toda la lista (cobrada o no).
+Resultado esperado: {producto: "Cable", importe: 5, vendedor: "Luis", cobrada: false}
+
+
+const ventas = [
+    {producto: "Portátil", importe: 900, vendedor: "Ana", cobrada: true},
+    {producto: "Ratón", importe: 20, vendedor: "Luis", cobrada: false},
+    {producto: "Monitor", importe: 250, vendedor: "Ana", cobrada: true},
+    {producto: "Teclado", importe: 45, vendedor: "Eva", cobrada: true},
+    {producto: "Cable", importe: 5, vendedor: "Luis", cobrada: false},
+];
+
+// A) Filtra las ventas pendientes de cobro (cobrada: false) y retorna un array con el nombre de sus productos en minúsculas.
+// Resultado esperado: ["ratón", "cable"]
+let pendientes=[];
+
+for (let venta of ventas) {
+    if(venta.cobrada===false){
+        pendientes.push(venta.producto.toLowerCase());
+    }
+}
+console.log(pendientes);
+
+//B) Calcula el importe total ya cobrado
+let suma =0;
+for(let venta of ventas){
+    if(venta.cobrada===true){
+        suma+=venta.importe
+    }
+}
+console.log(suma);
+
+//C)Devuelve la venta de menor importe de toda la lista (cobrada o no).
+// Resultado esperado: {producto: "Cable", importe: 5, vendedor: "Luis", cobrada: false}
+
+function importe_menor(ventas){
+    let menor = ventas[0];
+    for(let venta of ventas){
+        if(venta.importe<menor.importe){
+            menor = venta;
+        }
+    }
+    return menor;
+}
+console.log(importe_menor(ventas))
+
+ */
+
+/*EJERCICIO 10 =>   Tienes este array de proyectos con las horas que se han imputado cada día:
+
+const proyectos = [
+    {nombre: "Web", horas: [8, 6, 10, 4]},
+    {nombre: "App", horas: [3, 5, 2]},
+    {nombre: "API", horas: [12, 9, 11, 10]},
+    {nombre: "Informes", horas: [1, 2]},
+    {nombre: "Migración", horas: [15, 20, 18]},
+];
+
+a) Crea un nuevo array donde cada elemento sea un objeto con el nombre del proyecto, el total de horas y la media de horas por día (redondeada a 2 decimales)
+
+Resultado esperado:
+[
+  {nombre: "Web", totalHoras: 28, mediaHoras: 7},
+  {nombre: "App", totalHoras: 10, mediaHoras: 3.33},
+  {nombre: "API", totalHoras: 42, mediaHoras: 10.5},
+  {nombre: "Informes", totalHoras: 3, mediaHoras: 1.5},
+  {nombre: "Migración", totalHoras: 53, mediaHoras: 17.67}
+]
+
+b) Filtra y devuelve solo los nombres de los proyectos con más de 30 horas en total.
+Resultado esperado: ["API", "Migración"]
+
+c) ¿Algún proyecto tiene alguna jornada de 15 horas o más? Retorna true o false usando un método de iteración avanzado.
+Resultado esperado: true
+
+d) ¿Todos los proyectos suman más de 3 horas en total? Retorna true o false usando un método de iteración avanzado.
+Resultado esperado: false (Informes suma exactamente 3)
+
+
+
+//A)Crea un nuevo array donde cada elemento sea un objeto con el nombre del proyecto, el total de horas y la media de horas por día (redondeada a 2 decimales)
+//
+// Resultado esperado:
+// [
+//   {nombre: "Web", totalHoras: 28, mediaHoras: 7},
+//   {nombre: "App", totalHoras: 10, mediaHoras: 3.33},
+//   {nombre: "API", totalHoras: 42, mediaHoras: 10.5},
+//   {nombre: "Informes", totalHoras: 3, mediaHoras: 1.5},
+//   {nombre: "Migración", totalHoras: 53, mediaHoras: 17.67}
+// ]
+const proyectos = [
+    {nombre: "Web", horas: [8, 6, 10, 4]},
+    {nombre: "App", horas: [3, 5, 2]},
+    {nombre: "API", horas: [12, 9, 11, 10]},
+    {nombre: "Informes", horas: [1, 2]},
+    {nombre: "Migración", horas: [15, 20, 18]},
+];
+
+let array = [];
+proyectos.forEach(proyecto => {
+    let suma =0
+    proyecto.horas.forEach(proyecto => {
+        suma+=proyecto;
+    })
+    let media = suma/proyecto.horas.length;
+
+    array.push({
+        nombre: proyecto.nombre,
+        totalHoras: suma,
+        mediaHoras: Number(media.toFixed(2)),
+    })
+
+})
+console.log(array)
+
+//B)) Filtra y devuelve solo los nombres de los proyectos con más de 30 horas en total.
+// Resultado esperado: ["API", "Migración"]
+let mas_30 = [];
+
+for(let arra of array) {
+    if(arra.totalHoras>30){
+        mas_30.push(arra.nombre);
+    }
+}
+console.log(mas_30)
+
+//OPCION CON FILTER
+const opcion = array
+    .filter(proyecto => proyecto.totalHoras > 30)
+    .map(proyecto => proyecto.nombre);
+
+console.log(opcion); // ["API", "Migración"]
+
+
+//C)¿Algún proyecto tiene alguna jornada de 15 horas o más? Retorna true o false usando un método de iteración avanzado.
+// Resultado esperado: true
+const hayJornadaLarga = proyectos.some(proyecto =>
+    proyecto.horas.some(hora => hora >= 15)
+);
+console.log(hayJornadaLarga); // true
+
+//D)¿Todos los proyectos suman más de 3 horas en total? Retorna true o false usando un método de iteración avanzado.
+// Resultado esperado: false (Informes suma exactamente 3)
+const todosMasDe3 = proyectos.every(proyecto =>
+    proyecto.horas.reduce((suma, h) => suma + h, 0) > 3
+);
+console.log(todosMasDe3); // false
+
+ */
+
+/*EJERCICIO 11 CLASES => Crea una clase llamada “HojaDeGastos” con:
+
+constructor(empleado, limite). Guarda el empleado y el límite. La lista de gastos empieza vacía.
+anadirGasto(concepto, importe) => Si con este gasto el total superaría el límite, muestra por consola: “Límite superado” y NO guardes nada. Si no, guarda el gasto {concepto, importe}.
+verGastos() => imprime por consola cada gasto numerado:
+“1. Comida: 25 €”
+“2. Hotel: 120 €”
+“3. Taxi: 55 €”
+get totalGastado() => Getter que retorna la suma de los importes.
+get disponible() => Getter que retorna lo que queda hasta el límite.
+Ejemplo:
+
+const hoja = new HojaDeGastos("Marta", 200);
+hoja.anadirGasto("Comida", 25);
+hoja.anadirGasto("Hotel", 120);
+hoja.anadirGasto("Taxi", 80); // Límite superado (145 + 80 = 225)
+console.log(hoja.totalGastado); // 145
+console.log(hoja.disponible); // 55
+hoja.anadirGasto("Taxi", 55);
+console.log(hoja.disponible); // 0
+hoja.verGastos();
+
+
+
+class HojaDeGastos {
+    constructor(empleado, limite) {
+        this.empleado = empleado;
+        this.limite = limite;
+        this.gastos = [];
+    }
+
+    anadirGasto(concepto, importe) {
+        let total = 0;
+        for (let gasto of this.gastos) {
+            total += gasto.importe;
+        }
+        if (total + importe > this.limite) {
+            console.log("Límite superado");
+            return;
+        }
+        this.gastos.push({ concepto, importe });
+    }
+
+    verGastos() {
+        for (let i = 0; i < this.gastos.length; i++) {
+            console.log(`${i + 1}. ${this.gastos[i].concepto}: ${this.gastos[i].importe} €`);
+        }
+    }
+
+    get totalGastado() {
+        let suma = 0;
+        for (let gasto of this.gastos) {
+            suma += gasto.importe;
+        }
+        return suma;
+    }
+
+    get disponible() {
+        return this.limite - this.totalGastado;
+    }
+}
+
+// === PRUEBAS (las del enunciado) ===
+const hoja = new HojaDeGastos("Marta", 200);
+hoja.anadirGasto("Comida", 25);
+hoja.anadirGasto("Hotel", 120);
+hoja.anadirGasto("Taxi", 80);        // Límite superado
+console.log(hoja.totalGastado);      // 145
+console.log(hoja.disponible);        // 55
+hoja.anadirGasto("Taxi", 55);
+console.log(hoja.disponible);        // 0
+hoja.verGastos();
+
+ */
+
+/*EJERCICIO 12 Escribe una función llamada “totalPorCategoria” que reciba un array de gastos y retorne un objeto donde cada clave sea una categoría y su valor sea la suma de los importes de esa categoría.
+
+Usa reduce() y el operador spread (...)
+
+totalPorCategoria([
+    {categoria: "comida", importe: 20},
+    {categoria: "viajes", importe: 100},
+    {categoria: "comida", importe: 15}
+])
+-> { comida: 35, viajes: 100 }
+
+totalPorCategoria([]) -> {}
+
+
+const total = [
+    {categoria: "comida", importe: 20},
+    {categoria: "viajes", importe: 100},
+    {categoria: "comida", importe: 15}
+]
+
+function agrupar(total){
+    return total.reduce((acumulador,total) =>{
+        return { ...acumulador, [total.categoria]: (acumulador[total.categoria] || 0) + total.importe };
+    },{})
+}
+console.log(agrupar(total));
+
+ */
+
+/*EJERCICIO 13 => Tienes este array de técnicos de soporte con los minutos que han tardado en resolver cada incidencia:
+
+const tecnicos = [
+    {nombre: "Marta", tiempos: [10, 20, 30]},
+    {nombre: "Pablo", tiempos: [45, 50]},
+    {nombre: "Eva", tiempos: [5, 8, 6, 9]},
+    {nombre: "Luis", tiempos: [60, 75, 90]},
+    {nombre: "Ana", tiempos: [15, 25]},
+];
+
+a) Crea un nuevo array donde cada elemento sea un objeto con el nombre del técnico y la media de minutos de sus incidencias (redondeada a 2 decimales)
+
+Resultado esperado:
+[
+  {nombre: "Marta", mediaMinutos: 20},
+  {nombre: "Pablo", mediaMinutos: 47.5},
+  {nombre: "Eva", mediaMinutos: 7},
+  {nombre: "Luis", mediaMinutos: 75},
+  {nombre: "Ana", mediaMinutos: 20}
+]
+
+b) Filtra y devuelve solo los nombres de los técnicos con una media de 30 minutos o menos.
+Resultado esperado: ["Marta", "Eva", "Ana"]
+
+c) ¿Algún técnico ha tardado alguna vez 90 minutos o más en una incidencia? Retorna true o false usando un método de iteración avanzado.
+Resultado esperado: true
+
+d) ¿Todos los técnicos tienen una media inferior a 60 minutos? Retorna true o false usando un método de iteración avanzado.
+Resultado esperado: false (Luis tiene 75)
+
+
+
+const tecnicos = [
+    {nombre: "Marta", tiempos: [10, 20, 30]},
+    {nombre: "Pablo", tiempos: [45, 50]},
+    {nombre: "Eva", tiempos: [5, 8, 6, 9]},
+    {nombre: "Luis", tiempos: [60, 75, 90]},
+    {nombre: "Ana", tiempos: [15, 25]},
+];
+
+//A)Crea un nuevo array donde cada elemento sea un objeto con el nombre del técnico y la media de minutos de sus incidencias (redondeada a 2 decimales)
+let array = [];
+tecnicos.forEach(tecnico => {
+    let suma = 0;
+    tecnico.tiempos.forEach(tiempos => {
+        suma += tiempos;
+    });
+
+    let media = suma / tecnico.tiempos.length;
+
+    array.push({
+        nombre: tecnico.nombre,
+
+        mediaMinutos: Number(media.toFixed(2))
+    });
+});
+console.log(array);
+
+//B) Filtra y devuelve solo los nombres de los técnicos con una media de 30 minutos o menos.
+// Resultado esperado: ["Marta", "Eva", "Ana"]
+let media = [];
+
+for (let arrayElement of array) {
+    if(arrayElement.mediaMinutos<=30){
+        media.push(arrayElement.nombre);
+    }
+}
+console.log(media);
+
+//C)¿Algún técnico ha tardado alguna vez 90 minutos o más en una incidencia? Retorna true o false usando un método de iteración avanzado.
+
+const hayJornadaLarga = tecnicos.some(tecnico =>
+    tecnico.tiempos.some(tiempos => tiempos >= 90)
+);
+console.log(hayJornadaLarga); // true
+
+//D) ¿Todos los técnicos tienen una media inferior a 60 minutos? Retorna true o false usando un método de iteración avanzado.
+// Resultado esperado: false (Luis tiene 75)
+
+const inferior = array.every(arr =>
+    arr.mediaMinutos < 60
+);
+console.log(inferior);
+
+ */
+
+/*EJERCICIO 14 => Crea una función llamada “crearRegistroLogs” que implemente un registro de mensajes de un sistema usando un closure.
+
+La función principal (crearRegistroLogs) NO DEBE recibir parámetros y debe retornar un objeto JSON con estos métodos:
+
+registrar(mensaje) => añade el mensaje al final del registro.
+contar() => retorna el número de mensajes registrados.
+ultimo() => retorna el último mensaje registrado sin eliminarlo. Si no hay ninguno retorna null.
+buscar(texto) => retorna un array nuevo con los mensajes que contienen ese texto, en el orden en que se registraron. Si no hay ninguno retorna un array vacío.
+limpiar() => elimina todos los mensajes y retorna cuántos había.
+
+
+
+function crearRegistroLogs(){
+    let registro = [];
+    return{
+        registrar:function (mensaje){
+            registro.push(mensaje);
+            return "Mensaje registrado con extio"
+        },
+        contar:function (){
+            let contador = 0;
+            for (let registroElement of registro) {
+                contador++;
+            }return contador;                       // CAMBIO: el número, no un texto
+        },
+        ultimo:function (){
+            if (registro.length === 0) {            // NUEVO: sin mensajes -> null
+                return null;
+            }
+            return registro[registro.length - 1];   // el último, sin eliminarlo
+        },
+        buscar:function (texto){                    // NUEVO
+            let encontrados = [];
+            for (let mensaje of registro) {
+                if (mensaje.includes(texto)) {
+                    encontrados.push(mensaje);
+                }
+            }
+            return encontrados;                     // array nuevo, [] si no hay ninguno
+        },
+        limpiar:function (){                        // NUEVO
+            let cantidad = registro.length;         // se guarda ANTES de vaciar
+            registro = [];
+            return cantidad;
+        }
+    }
+}
+
+const log = crearRegistroLogs();
+log.registrar("Inicio de sesión: ana");
+log.registrar("Error de conexión");
+log.registrar("Inicio de sesión: luis");
+console.log(log.contar());           // 3
+console.log(log.ultimo());           // "Inicio de sesión: luis"
+console.log(log.buscar("Inicio"));   // ["Inicio de sesión: ana", "Inicio de sesión: luis"]
+console.log(log.buscar("Timeout"));  // []
+console.log(log.limpiar());          // 3
+console.log(log.contar());           // 0
+console.log(log.ultimo());           // null
+
+ */
+
+/*EJERCICIO 15 => Crea una clase llamada “Almacen” con:
+
+constructor(nombre). Guarda el nombre. La lista de productos empieza vacía. Cada producto de la lista tiene la forma {producto, cantidad}.
+entrada(producto, cantidad) => Si el producto ya está en la lista, suma la cantidad a la que tiene. Si no está, lo añade al final con esa cantidad.
+salida(producto, cantidad) => Si el producto no está en la lista, o su cantidad es menor que la pedida, muestra por consola: “Stock insuficiente” y NO cambies nada. Si no, resta la cantidad. Si el producto se queda en 0, sigue en la lista con cantidad 0.
+verStock() => imprime por consola cada producto numerado, en el orden en que se añadieron:
+“1. Teclado: 3 uds”
+“2. Ratón: 5 uds”
+get totalUnidades() => Getter que retorna la suma de las cantidades de todos los productos.
+get productosDistintos() => Getter que retorna cuántos productos distintos hay en la lista.
+
+
+class Almacen {
+    constructor(nombre) {
+        this.nombre = nombre;
+        this.productos = [];
+    }
+
+    entrada(producto, cantidad) {
+        for (let item of this.productos) {
+            if (item.producto === producto) {
+                item.cantidad += cantidad;
+                return;
+            }
+        }
+        this.productos.push({ producto, cantidad });
+    }
+
+    salida(producto, cantidad) {
+        for (let item of this.productos) {
+            if (item.producto === producto) {
+                if (item.cantidad < cantidad) {
+                    console.log("Stock insuficiente");
+                    return;
+                }
+                item.cantidad -= cantidad;
+                return;
+            }
+        }
+        console.log("Stock insuficiente");
+    }
+
+    verStock() {
+        for (let i = 0; i < this.productos.length; i++) {
+            console.log(`${i + 1}. ${this.productos[i].producto}: ${this.productos[i].cantidad} uds`);
+        }
+    }
+
+    get totalUnidades() {
+        let suma = 0;
+        for (let item of this.productos) {
+            suma += item.cantidad;
+        }
+        return suma;
+    }
+
+    get productosDistintos() {
+        return this.productos.length;
+    }
+}
+
+// === PRUEBAS (las del enunciado) ===
+const almacen = new Almacen("Central");
+almacen.entrada("Teclado", 10);
+almacen.entrada("Ratón", 5);
+almacen.entrada("Teclado", 5);
+almacen.salida("Ratón", 8);                // Stock insuficiente
+almacen.salida("Monitor", 1);              // Stock insuficiente
+almacen.salida("Teclado", 12);
+console.log(almacen.totalUnidades);        // 8
+console.log(almacen.productosDistintos);   // 2
+almacen.salida("Ratón", 5);
+console.log(almacen.productosDistintos);   // 2 (Ratón sigue con 0)
+almacen.verStock();
+// 1. Teclado: 3 uds
+// 2. Ratón: 0 uds
+
+ */
