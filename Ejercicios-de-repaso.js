@@ -1071,68 +1071,58 @@ obtenerBajoStock(limite):
 
 Recorre el array privado y devuelve un nuevo array con los nombres de los artículos cuya cantidad sea menor o igual al limite indicado.
 
-
 function crearAlamacenInteligente() {
     let stock = [];
     return {
         agregar: function(articulo, cantidad) {
             stock.push({ articulo: articulo, cantidad: cantidad });
-            return `Articulo => ${articulo} |||||| Cantidad => ${cantidad}`;
+            return `Artículo => ${articulo} || Cantidad => ${cantidad}`;
         },
 
-        restablecer: function(articulo, cantidadExtra) {
-            for (let stockElement of stock) {
-                if (stockElement.articulo === articulo) {
-                    // Actualizamos y devolvemos la nueva cantidad
-                    stockElement.cantidad += cantidadExtra;
-                    return stockElement.cantidad;
+        reabastecer: function(articulo, cantidadExtra) {
+            for (let item of stock) {
+                if (item.articulo === articulo) {
+                    item.cantidad += cantidadExtra;
+                    return item.cantidad; // Devuelve la nueva cantidad total
                 }
             }
-            return "Articulo no encontrado";
+            return "Artículo no encontrado";
         },
 
         retirar: function(articulo, cantidadRetiro) {
-            for (let stockElement of stock) {
-                if (stockElement.articulo === articulo) {
-                    // Validamos el stock
-                    if (stockElement.cantidad >= cantidadRetiro) {
-                        stockElement.cantidad -= cantidadRetiro; // ¡Actualizamos el stock real!
-                        return stockElement.cantidad;
+            for (let item of stock) {
+                if (item.articulo === articulo) {
+                    if (item.cantidad >= cantidadRetiro) {
+                        item.cantidad -= cantidadRetiro;
+                        return item.cantidad; // Devuelve el stock restante
                     } else {
                         return "Stock insuficiente";
                     }
                 }
             }
-            return "Articulo no encontrado";
+            return "Artículo no encontrado";
         },
 
-        obtener: function(limite) {
-            let alerta = []; // Array auxiliar para acumular los nombres
-            for (let stockElement of stock) {
-                // Usamos <= según la regla de negocio (menor o igual al límite)
-                if (stockElement.cantidad <= limite) {
-                    alerta.push(stockElement.articulo);
+        obtenerBajoStock: function(limite) {
+            let bajos = [];
+            stock.forEach(item => {
+                if (item.cantidad <= limite) {
+                    bajos.push(item.articulo);
                 }
-            }
-            return alerta; // Devuelve el array completo de golpe
+            });
+            return bajos;
         }
-    }
+    };
 }
 
-
-// Ejemplo de uso esperado:
+// Ejemplo de prueba:
 const miAlmacen = crearAlamacenInteligente();
+console.log(miAlmacen.agregar("Teclados", 10));
+console.log(miAlmacen.agregar("Ratones", 4));
 
-console.log(miAlmacen.agregar("Mouse", 5));       // "Artículo 'Mouse' registrado con 5 unidades."
-console.log(miAlmacen.agregar("Monitores", 3));    // "Artículo 'Monitores' registrado con 3 unidades."
-console.log(miAlmacen.agregar("Cable HDMI", 25)); // "Artículo 'Cable HDMI' registrado con 25 unidades."
-
-console.log(miAlmacen.restablecer("Mouse", 10));  // 15 (5 + 10)
-
-console.log(miAlmacen.retirar("Monitores", 2));   // 1 (3 - 2)
-
-// ¿Qué artículos tienen 5 unidades o menos?
-console.log(miAlmacen.obtener(5))
+console.log(miAlmacen.reabastecer("Teclados", 5)); // Devuelve: 15
+console.log(miAlmacen.retirar("Ratones", 2));      // Devuelve: 2
+console.log(miAlmacen.obtenerBajoStock(5));        // Devuelve: ["Ratones"]
 
  */
 
@@ -5673,7 +5663,7 @@ Si no existe, devuelve "Tarea no encontrada".
 pendientes():
 Devuelve un array con copias ({ ...tarea }) de las tareas con hecha === false.
 
- 
+
 
 function ListaTareas() {
     this.tareas = [];
@@ -5735,6 +5725,7 @@ console.log(lista.pendientes());      // solo la tarea 3
 console.log(lista.agregar("Nueva"));  // id 4
 console.log(lista.pendientes());      // tareas 3 y 4
 
+ */
 
 /*Ejercicio 2=> Un poco más que la lista de tareas: ahora hay validaciones (que ya conoces de las funciones fábrica) y un método que usa a otro.
 
@@ -6995,231 +6986,7 @@ Hotel.prototype.ingresosTotales = function () {
     return total;
 };
 
-/*Ejercicio 9 =>
-
-Mismo nivel que el hotel: dos arrays, un método de búsqueda, métodos que se llaman entre sí con this. y un informe al final. La novedad es que hay una tarifa fija guardada en el constructor y se usa con this.tarifa.
-
-Crea una función constructora Parking() (se usa con new).
-
-En el constructor (con this.):
-
-this.plazas = [];
-this.tickets = [];
-this.siguienteIdPlaza = 1;
-this.siguienteIdTicket = 1;
-this.tarifa = 2; (euros por hora)
-
-En el prototype, estos ocho métodos:
-
-agregarPlaza(numero, tipo):
-Si tipo === "", devuelve "Datos no válidos".
-Si ya existe una plaza con ese numero, devuelve "Plaza ya registrada" (recorre con for of).
-Añade a this.plazas: { id: this.siguienteIdPlaza++, numero, tipo, ocupada: false }.
-Devuelve un string de confirmación.
-buscarPlaza(id):
-Recorre this.plazas con for of.
-Devuelve el objeto plaza si la encuentra, o null si no.
-entrar(idPlaza, matricula):
-Usa this.buscarPlaza(idPlaza). Si devuelve null, devuelve "Plaza no encontrada".
-Si la plaza está ocupada (ocupada === true), devuelve "Plaza ocupada".
-Recorre this.tickets y, si esa matricula ya tiene un ticket con activo === true, devuelve "Vehículo ya está dentro".
-Pone ocupada = true y añade a this.tickets: { idTicket: this.siguienteIdTicket++, idPlaza, matricula, total: 0, activo: true }.
-Devuelve un string de éxito que incluya el id del ticket.
-salir(idTicket, horas):
-Si horas <= 0, devuelve "Horas no válidas".
-Busca el ticket con for i. Si no existe, "Ticket no encontrado".
-Si activo === false, "Ticket ya cerrado".
-Calcula total = horas * this.tarifa, lo guarda en el ticket y pone activo = false.
-Usa this.buscarPlaza(...) para dejar la plaza ocupada = false.
-Devuelve un string que incluya el total.
-No se borra el ticket: cuenta en la recaudación.
-plazasLibres():
-Devuelve un array con copias ({ ...plaza }) de las plazas con ocupada === false.
-ticketsDeVehiculo(matricula):
-Devuelve un array con los números de plaza de todos los tickets de esa matrícula (activos o cerrados). Usa this.buscarPlaza para sacar el número.
-recaudacion():
-Devuelve la suma de total de los tickets con activo === false.
-plazaMasUsada():
-Para cada plaza, cuenta cuántos tickets tiene (activos o cerrados). Devuelve el número de la que más tiene, o "Sin usos" si no hay ningún ticket.
-
-function Parking() {
-    this.plazas = [];
-    this.tickets = [];
-    this.siguienteIdPlaza = 1;
-    this.siguienteIdTicket = 1;
-    this.tarifa = 2;
-}
-
-Parking.prototype.agregarPlaza = function (numero, tipo) {
-    if (tipo === "") {
-        return "Datos no válidos";
-    }
-    for (let plaza of this.plazas) {
-        if (plaza.numero === numero) {
-            return "Plaza ya registrada";
-        }
-    }
-    this.plazas.push({ id: this.siguienteIdPlaza++, numero, tipo, ocupada: false });
-    return `Plaza ${numero} registrada con éxito`;
-};
-
-Parking.prototype.buscarPlaza = function (id) {
-    for (let plaza of this.plazas) {
-        if (plaza.id === id) {
-            return plaza;
-        }
-    }
-    return null;
-};
-
-Parking.prototype.entrar = function (idPlaza, matricula) {
-    let plaza = this.buscarPlaza(idPlaza);
-    if (plaza === null) {
-        return "Plaza no encontrada";
-    }
-    if (plaza.ocupada === true) {
-        return "Plaza ocupada";
-    }
-    for (let ticket of this.tickets) {
-        if (ticket.matricula === matricula && ticket.activo === true) {
-            return "Vehículo ya está dentro";
-        }
-    }
-
-    plaza.ocupada = true;
-
-    // ERROR: `this.tickets.idTicket` trataba el array como un objeto (undefined).
-    // CORRECCIÓN: guardar el id en una variable ANTES del push y usarla.
-    let id = this.siguienteIdTicket++;
-    this.tickets.push({ idTicket: id, idPlaza, matricula, total: 0, activo: true });
-    return `Vehículo aparcado con éxito. Ticket ${id}`;
-};
-
-Parking.prototype.salir = function (idTicket, horas) {
-    if (horas <= 0) {
-        return "Horas no válidas";
-    }
-    for (let i = 0; i < this.tickets.length; i++) {
-        if (this.tickets[i].idTicket === idTicket) {
-            if (this.tickets[i].activo === false) {
-                return "Ticket ya cerrado";
-            }
-
-            let total = horas * this.tarifa;
-
-            // ERROR: `this.tickets[i].push(total)` (un ticket es un objeto, no tiene push).
-            // CORRECCIÓN: asignar la propiedad `total`.
-            this.tickets[i].total = total;
-            this.tickets[i].activo = false;
-
-            // ERROR: `this.buscar(idTicket)` buscaba una PLAZA con el id de un TICKET.
-            // CORRECCIÓN: usar el idPlaza guardado en el ticket.
-            let plaza = this.buscarPlaza(this.tickets[i].idPlaza);
-            if (plaza !== null) {
-                plaza.ocupada = false;
-            }
-
-            // ERROR: devolvías solo el número. El enunciado pide un string con el total.
-            return `Salida registrada. Total: ${total}`;
-        }
-    }
-    return "Ticket no encontrado";
-};
-
-Parking.prototype.plazasLibres = function () {
-    let libres = [];
-    // ERROR: el return estaba DENTRO del bucle: devolvía solo la primera plaza
-    // (como objeto) y, si no había ninguna libre, undefined.
-    // CORRECCIÓN: acumular copias en un array y devolverlo al final.
-    for (let plaza of this.plazas) {
-        if (plaza.ocupada === false) {
-            libres.push({ ...plaza });
-        }
-    }
-    return libres;
-};
-
-// ERROR: faltaba `.prototype` (era `Parking.ticketsDeVehiculo`), buscabas una
-// plaza con una matrícula y el método estaba sin terminar.
-// CORRECCIÓN: recorrer los tickets de esa matrícula y sacar el número de
-// la plaza con this.buscarPlaza.
-Parking.prototype.ticketsDeVehiculo = function (matricula) {
-    let numeros = [];
-    for (let ticket of this.tickets) {
-        if (ticket.matricula === matricula) {
-            let plaza = this.buscarPlaza(ticket.idPlaza);
-            if (plaza !== null) {
-                numeros.push(plaza.numero);
-            }
-        }
-    }
-    return numeros;
-};
-
-Parking.prototype.recaudacion = function () {
-    let suma = 0;
-    for (let ticket of this.tickets) {
-        if (ticket.activo === false) {
-            suma += ticket.total;
-        }
-    }
-    return suma;
-};
-
-Parking.prototype.plazaMasUsada = function () {
-    let maximo = 0;
-    let numero = "Sin usos";
-    for (let plaza of this.plazas) {
-        let contador = 0;
-        for (let ticket of this.tickets) {
-            if (ticket.idPlaza === plaza.id) {
-                contador++;
-            }
-        }
-        if (contador > maximo) {
-            maximo = contador;
-            numero = plaza.numero;
-        }
-    }
-    return numero;
-};
-
-// === PRUEBAS ===
-const p = new Parking();
-
-console.log(p.agregarPlaza(1, "Coche"));
-console.log(p.agregarPlaza(2, "Moto"));
-console.log(p.agregarPlaza(1, "Coche"));        // Plaza ya registrada
-console.log(p.agregarPlaza(3, ""));             // Datos no válidos
-
-console.log(p.buscarPlaza(1));                  // objeto plaza 1
-console.log(p.buscarPlaza(99));                 // null
-
-console.log(p.entrar(1, "1111AAA"));            // éxito, ticket 1
-console.log(p.entrar(1, "2222BBB"));            // Plaza ocupada
-console.log(p.entrar(2, "1111AAA"));            // Vehículo ya está dentro
-console.log(p.entrar(99, "3333CCC"));           // Plaza no encontrada
-console.log(p.entrar(2, "2222BBB"));            // éxito, ticket 2
-
-console.log(p.plazasLibres());                  // []
-console.log(p.recaudacion());                   // 0
-
-console.log(p.salir(1, 0));                     // Horas no válidas
-console.log(p.salir(1, 3));                     // total 6
-console.log(p.salir(1, 3));                     // Ticket ya cerrado
-console.log(p.salir(99, 1));                    // Ticket no encontrado
-
-console.log(p.plazasLibres());                  // solo la plaza 1
-console.log(p.recaudacion());                   // 6
-console.log(p.ticketsDeVehiculo("1111AAA"));    // [1]
-
-console.log(p.entrar(1, "1111AAA"));            // ticket 3
-console.log(p.ticketsDeVehiculo("1111AAA"));    // [1, 1]
-console.log(p.plazaMasUsada());                 // 1
-
-
-*/
-
+ */
 
 /*Ejercicio 9 =>
 
@@ -8217,6 +7984,283 @@ console.log(rrhh.empleadoMasVacaciones());                    // Ana (22 días c
 
  */
 
+/*####################EJERCICIOS DE CLASE SIMILARES A LO QUE VAN A SER EN EL EXAMEN #########*/
+/*## Ejercicio 1
+
+Escribe una función llamada "aplanar" que reciba un array de arrays
+de números y retorne un único array con todos los números en orden, sin anidar
+
+Usa reduce() y el operador spread (...)
+
+    ```
+aplanar([ [1, 2], [3, 4], [5] ]) -> [1, 2, 3, 4, 5]
+aplanar([ [10], [20, 30], [] ]) -> [10, 20, 30]
+
+
+
+function  aplanar(arrays){
+    return arrays.reduce((acc, cur) => [...acc, ...cur], []);
+}
+
+
+console.log(aplanar([[1, 2], [3, 4], [5]]));
+console.log(aplanar([[10], [20, 30], []]));
+*/
+
+/*Ejercicio 2
+
+Tienes este array de productos:
+
+```
+const productos = [
+    {nombre: "Camiseta", precio: 15, categoria: "ropa", stock: 3},
+    {nombre: "Pantalón", precio: 40, categoria: "ropa", stock: 0},
+    {nombre: "Teclado", precio: 75, categoria: "tecnología", stock: 12},
+    {nombre: "Auriculares", precio: 60, categoria: "tecnología", stock: 5},
+];
+```
+
+a) Filtra solo los productos con stock > 0 y retorna un array con sus nombres en mayúsculas
+`Resultado esperado: ["Camiseta", "Teclado", "Auriculares"]`
+
+b) Calcula el precio total de todos los productos con stock > 0.
+
+c) Devuelve el producto más caro de toda la lista (con o sin stock).
+
+
+
+const productos = [
+    {nombre: "Camiseta", precio: 15, categoria: "ropa", stock: 3},
+    {nombre: "Pantalón", precio: 40, categoria: "ropa", stock: 0},
+    {nombre: "Teclado", precio: 75, categoria: "tecnología", stock: 12},
+    {nombre: "Auriculares", precio: 60, categoria: "tecnología", stock: 5},
+];
+//Productos sin stock
+let sin_stock=[];
+for (let producto of productos) {
+    if (producto.stock === 0) {
+        sin_stock.push(producto.nombre)
+    }
+}
+console.log(sin_stock);
+//Productos mas caros con stock
+let suma_total=0;
+
+for (let producto of productos) {
+    if(producto.stock>0){
+        suma_total+=producto.precio;
+    }
+}
+console.log(suma_total);
+
+
+//Producto mas caro
+
+
+function productoMasCaro(productos) {
+    let masCaro = productos[0];
+
+    for (let producto of productos) {
+        if (producto.precio > masCaro.precio) {
+            masCaro = producto;
+        }
+    }
+
+    return masCaro;
+}
+
+console.log(productoMasCaro(productos));
+
+ */
+
+/*Ejercicio 3 => Tienes este array de alumnos con sus notas:
+
+```
+const alumnos = [
+    {nombre: "Ana", notas: [8, 7, 9, 6]},
+    {nombre: "Luis", notas: [4, 5, 3, 6]},
+    {nombre: "Maria", notas: [10, 9, 8, 10]},
+    {nombre: "Pedro", notas: [5, 4, 6, 3]},
+    {nombre: "Sofia", notas: [7, 8, 7, 9]},
+];
+```
+
+a) Crea un nuevo array donde cada elemento sea un objeto con el nombre del alumno y su media de notas *(redondeada a 2 decimales)*
+`Resultado esperado: [ {nombre: "Ana", media: 7.50} ]`
+
+b) Filtra y devuelve solo los alumnos aprobados (media >= 5).
+
+c) ¿Algún alumno tiene alguna nota perfecta (10)?. Retorna true o false usando un método de iteración avanzado.
+
+
+const alumnos = [
+    {nombre: "Ana", notas: [8, 7, 9, 6]},
+    {nombre: "Luis", notas: [4, 5, 3, 6]},
+    {nombre: "Maria", notas: [10, 10, 10, 10]},
+    {nombre: "Pedro", notas: [5, 4, 6, 3]},
+    {nombre: "Sofia", notas: [7, 8, 7, 9]},
+];
+
+a) Crea un nuevo array donde cada elemento sea un objeto con el nombre del alumno y su media de notas *(redondeada a 2 decimales)*
+`Resultado esperado: [ {nombre: "Ana", media: 7.50} ]`
+
+let nuevo = [];
+alumnos.forEach(alumno => {
+    let suma = 0;
+    alumno.notas.forEach(nota => {
+        suma += nota;
+    });
+
+    let media = suma / alumno.notas.length;
+
+    nuevo.push({
+        nombre: alumno.nombre,
+        media: Number(media.toFixed(2))
+    });
+});
+console.log(nuevo);
+
+b) Filtra y devuelve solo los alumnos aprobados (media >= 5).
+let aprobados = [];
+for (let aptos of nuevo) {
+    if(aptos.media>=5){
+        aprobados.push(aptos);
+
+    }
+}
+console.log(aprobados);
+
+c) ¿Algún alumno tiene alguna nota perfecta (10)?. Retorna true o false usando un método de iteración avanzado.
+
+
+ */
+
+/*Ejercicio 4 => Crea una función llamada "crearPila" que implemente una estructura de datos tipo pila (stack) usando un closure.
+
+La función principal (crearPila) NO DEBE recibir parámetros y debe retornar un objeto JSON con estos métodos:
+- apilar(valor) => añade el valor al tope de la pila.
+- desapilar() => elimina y retorna el valor del tope. Si la pila está vacía retorna *null*.
+- tope() => devuelve el valor del tope de la pila sin eliminarlo. Si está vacía retorna *null*.
+- tamano() => retorna el número de elementos que tiene la pila.
+
+IMPORTANTE: La pila (el array interno) NO debe ser accesible desde fuera.
+
+
+function crearPila() {
+    const elementos = []; // privado: solo accesible desde los métodos
+
+    return {
+        apilar(valor) {
+            elementos.push(valor);
+        },
+        desapilar() {
+            return elementos.length === 0 ? null : elementos.pop();
+        },
+        tope() {
+            return elementos.length === 0 ? null : elementos[elementos.length - 1];
+        },
+        tamano() {
+            return elementos.length;
+        }
+    };
+}
+
+// Pruebas
+const pila = crearPila();
+pila.apilar(1);
+pila.apilar(2);
+pila.apilar(3);
+console.log(pila.tope());     // 3
+console.log(pila.desapilar()); // 3
+
+console.log(pila.tope());     // 2
+console.log(pila.tamano());   // 2
+
+// Pila vacía
+const vacia = crearPila();
+console.log(vacia.desapilar()); // null
+console.log(vacia.tope());      // null
+console.log(vacia.tamano());    // 0
+
+// El array interno no es accesible
+console.log(pila.elementos);
+
+ */
+
+/*## Ejercicio 5 CLASE
+
+Crea una clase llamada "CuentaBancaria" con:
+
+- constructor(titular, saldoInicial). Guarda el titular y el saldo. El historial empieza vacío.
+- ingresar(cantidad) => Suma la cantidad al saldo y guarda en el historial:
+  - "Ingreso: +100 | Saldo: 600"
+- retirar(cantidad) => Resta la cantidad al saldo si hay fondos suficientes y guarda en el historial.
+  - "Retiro -50 | Saldo: 550"
+  - Si no hay fondos, muestra por consola: "Saldo insuficiente" y NO guardes nada en el historial.
+- verHistorial() => imprime por consola cada movimiento del historial numerado:
+  - "1. Ingreso: +100 | Saldo: 500"
+  - "2. Ingreso: +100 | Saldo: 600"
+  - "3. Ingreso: +50 | Saldo: 650"
+  - "4. Retiro: -250 | Saldo: 400"
+- getSaldoActual() => Getter que retorna el saldo actual.
+
+```
+Ejemplo:
+
+const cuenta = new CuentaBancaria("Camilo", 500);
+cuenta.ingresar(100);
+cuenta.retirar(50);
+cuenta.retirar(700); // Saldo insuficiente
+console.log(cuenta.saldoActual); // 550
+cuenta.verHistorial();
+```
+
+
+
+class CuentaBancaria {
+    constructor(titular, saldoInicial) {
+        this.titular = titular;
+        this.saldo = saldoInicial;
+        this.historial = [];
+    }
+
+    ingresar(cantidad) {
+        this.saldo += cantidad;
+        this.historial.push(`Ingreso: +${cantidad} | Saldo: ${this.saldo}`);
+    }
+
+    retirar(cantidad) {
+        if (cantidad > this.saldo) {
+            console.log("Saldo insuficiente");
+            return; // no se guarda nada en el historial
+        }
+        this.saldo -= cantidad;
+        this.historial.push(`Retiro: -${cantidad} | Saldo: ${this.saldo}`);
+    }
+
+    verHistorial() {
+        this.historial.forEach((movimiento, i) => {
+            console.log(`${i + 1}. ${movimiento}`);
+        });
+    }
+
+    get saldoActual() {
+        return this.saldo;
+    }
+}
+
+// Pruebas
+const cuenta = new CuentaBancaria("Camilo", 500);
+cuenta.ingresar(100);
+cuenta.retirar(50);
+cuenta.retirar(700);              // Saldo insuficiente
+console.log(cuenta.saldoActual);  // 550
+cuenta.verHistorial();
+// 1. Ingreso: +100 | Saldo: 600
+// 2. Retiro: -50 | Saldo: 550
+
+ */
+
 
 /*###########EJERCICIOS CON DIFICULTAD SIMILAR A LA DE LOS DE CLASE PARA EL EXAMEN###########*/
 
@@ -8585,7 +8629,6 @@ const empleadoMaxSalario = empleados.reduce((maximo, empleado) => {
 console.log(empleadoMaxSalario);
 
  */
-
 
 /*EJERCICIOO 8 => Escribe una función llamada “agruparPorDepartamento” que reciba un array de empleados y retorne un objeto donde cada clave sea un departamento y su valor sea un array con los nombres de los empleados de ese departamento.
 
@@ -9039,7 +9082,7 @@ console.log(log.ultimo());           // null
 
  */
 
-/*EJERCICIO 15 => Crea una clase llamada “Almacen” con:
+/*EJERCICIO 15  CLASE=> Crea una clase llamada “Almacen” con:
 
 constructor(nombre). Guarda el nombre. La lista de productos empieza vacía. Cada producto de la lista tiene la forma {producto, cantidad}.
 entrada(producto, cantidad) => Si el producto ya está en la lista, suma la cantidad a la que tiene. Si no está, lo añade al final con esa cantidad.
@@ -9115,5 +9158,199 @@ console.log(almacen.productosDistintos);   // 2 (Ratón sigue con 0)
 almacen.verStock();
 // 1. Teclado: 3 uds
 // 2. Ratón: 0 uds
+
+ */
+
+/*EJERCICIO 16 => Escribe una función llamada “separarFacturas” que reciba un array de facturas y retorne un objeto con dos claves: pagadas (array con los números de las facturas pagadas) y pendientes (array con los números de las no pagadas). Las dos claves aparecen siempre, aunque estén vacías.
+
+Usa reduce() y el operador spread (...)
+
+separarFacturas([
+    {numero: 101, pagada: true},
+    {numero: 102, pagada: false},
+    {numero: 103, pagada: true}
+])
+-> { pagadas: [101, 103], pendientes: [102] }
+
+separarFacturas([]) -> { pagadas: [], pendientes: [] }
+
+
+const separarFacturas=[
+    {numero: 101, pagada: true},
+    {numero: 102, pagada: false},
+    {numero: 103, pagada: true}
+]
+
+function  agrupar(separarFacturas) {
+    return separarFacturas.reduce((acumulador,separarFacturas) => {
+        if (separarFacturas.pagada) {
+            return { ...acumulador, pagadas: [...acumulador.pagadas, separarFacturas.numero] };
+        }
+        return { ...acumulador, pendientes: [...acumulador.pendientes, separarFacturas.numero] };
+    },{ pagadas: [], pendientes: [] })
+}
+console.log(agrupar(separarFacturas));
+
+
+ */
+
+/*EJERCICIO 17 => Tienes este array de compras a proveedores:
+
+const compras = [
+    {proveedor: "Alfa", importe: 500, urgente: true, recibido: false},
+    {proveedor: "Beta", importe: 120, urgente: false, recibido: true},
+    {proveedor: "Gamma", importe: 900, urgente: true, recibido: true},
+    {proveedor: "Delta", importe: 60, urgente: false, recibido: false},
+    {proveedor: "Omega", importe: 300, urgente: true, recibido: false},
+];
+
+a) Filtra las compras urgentes (urgente: true) y retorna un array con el nombre de su proveedor en mayúsculas.
+Resultado esperado: ["ALFA", "GAMMA", "OMEGA"]
+
+b) Calcula el importe total de las compras ya recibidas.
+Resultado esperado: 1020
+
+c) Devuelve la compra de menor importe de toda la lista (recibida o no).
+Resultado esperado: {proveedor: "Delta", importe: 60, urgente: false, recibido: false}
+
+d) Devuelve un array con el nombre de los proveedores ordenados de menor a mayor importe, sin modificar el array original.
+Resultado esperado: ["Delta", "Beta", "Omega", "Alfa", "Gamma"]
+
+
+
+const compras = [
+    {proveedor: "Alfa", importe: 500, urgente: true, recibido: false},
+    {proveedor: "Beta", importe: 120, urgente: false, recibido: true},
+    {proveedor: "Gamma", importe: 900, urgente: true, recibido: true},
+    {proveedor: "Delta", importe: 60, urgente: false, recibido: false},
+    {proveedor: "Omega", importe: 300, urgente: true, recibido: false},
+];
+
+//A)Filtra las compras urgentes (urgente: true) y retorna un array con el nombre de su proveedor en mayúsculas.
+// Resultado esperado: ["ALFA", "GAMMA", "OMEGA"]
+let filtro = [];
+
+for (let compra of compras) {
+    if(compra.urgente===true){
+        filtro.push(compra.proveedor.toUpperCase());
+    }
+}
+console.log(filtro);
+
+//B) Calcula el importe total de las compras ya recibidas.
+// Resultado esperado: 1020
+let suma =0;
+for (let compra of compras) {
+    if(compra.recibido===true){
+        suma+=compra.importe;
+    }
+}
+console.log(suma);
+
+//C)Devuelve la compra de menor importe de toda la lista (recibida o no).
+// Resultado esperado: {proveedor: "Delta", importe: 60, urgente: false, recibido: false}
+function importe_menor(compras){
+    let menor = compras[0];
+    for(let compra of compras){
+        if(compra.importe<menor.importe){
+            menor = compra;
+        }
+    }
+    return menor;
+}
+console.log(importe_menor(compras))
+
+//D)Devuelve un array con el nombre de los proveedores ordenados de menor a mayor importe, sin modificar el array original.
+// Resultado esperado: ["Delta", "Beta", "Omega", "Alfa", "Gamma"]
+
+const ordenados = [...compras]
+    .sort((a, b) => a.importe - b.importe)
+    .map(compra => compra.proveedor);
+
+console.log(ordenados);
+// ["Delta", "Beta", "Omega", "Alfa", "Gamma"]
+
+
+ */
+
+/*EJERCICIO 18 => Tienes este array de sucursales con los pedidos que ha recibido cada día:
+
+const sucursales = [
+    {nombre: "Madrid", pedidos: [12, 30, 25]},
+    {nombre: "Sevilla", pedidos: [8, 14]},
+    {nombre: "Bilbao", pedidos: [40, 55, 60, 45]},
+    {nombre: "Vigo", pedidos: [5, 7, 9]},
+    {nombre: "Valencia", pedidos: [20, 35]},
+];
+
+a) Crea un nuevo array donde cada elemento sea un objeto con el nombre de la sucursal y su media de pedidos (redondeada a 2 decimales)
+
+Resultado esperado:
+[
+  {nombre: "Madrid", mediaPedidos: 22.33},
+  {nombre: "Sevilla", mediaPedidos: 11},
+  {nombre: "Bilbao", mediaPedidos: 50},
+  {nombre: "Vigo", mediaPedidos: 7},
+  {nombre: "Valencia", mediaPedidos: 27.5}
+]
+
+b) Filtra y devuelve solo los nombres de las sucursales con una media mayor que 20.
+Resultado esperado: ["Madrid", "Bilbao", "Valencia"]
+
+c) ¿Alguna sucursal ha tenido algún día con 60 pedidos o más? Retorna true o false usando un método de iteración avanzado.
+Resultado esperado: true
+
+d) ¿Todas las sucursales han tenido todos sus días con 6 pedidos o más? Retorna true o false usando un método de iteración avanzado.
+Resultado esperado: false (Vigo tuvo un día con 5)
+
+ 
+
+const sucursales = [
+    {nombre: "Madrid", pedidos: [12, 30, 25]},
+    {nombre: "Sevilla", pedidos: [8, 14]},
+    {nombre: "Bilbao", pedidos: [40, 55, 60, 45]},
+    {nombre: "Vigo", pedidos: [5, 7, 9]},
+    {nombre: "Valencia", pedidos: [20, 35]},
+];
+
+//A) Crea un nuevo array donde cada elemento sea un objeto con el nombre de la sucursal y su media de pedidos (redondeada a 2 decimales)
+
+let nuevo = [];
+sucursales.forEach(sucursal => {
+    let suma = 0;
+    sucursal.pedidos.forEach(pedido => {
+        suma += pedido;
+    });
+
+    let media = suma / sucursal.pedidos.length;
+
+    nuevo.push({
+        nombre: sucursal.nombre,
+        media: Number(media.toFixed(2))
+    });
+});
+console.log(nuevo);
+
+//B)) Filtra y devuelve solo los nombres de las sucursales con una media mayor que 20.
+// Resultado esperado: ["Madrid", "Bilbao", "Valencia"]
+let lista = [];
+for (let nuevoElement of nuevo) {
+    if(nuevoElement.media>20){
+        lista.push(nuevoElement.nombre);
+    }
+}
+console.log(lista);
+
+//C)¿Alguna sucursal ha tenido algún día con 60 pedidos o más? Retorna true o false usando un método de iteración avanzado.
+
+const omas60 = sucursales.some(sucursal => sucursal.pedidos.some(pedidos => pedidos >=60));
+console.log(omas60);
+
+//D)¿Todas las sucursales han tenido todos sus días con 6 pedidos o más? Retorna true o false usando un método de iteración avanzado.
+
+const maspedidos = sucursales.every(surcursal =>
+    surcursal.pedidos.every(h => h >= 6)
+);
+console.log(maspedidos); // false
 
  */
