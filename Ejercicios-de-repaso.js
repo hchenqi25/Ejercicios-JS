@@ -8728,7 +8728,7 @@ console.log(importe_menor(ventas))
 
  */
 
-/*EJERCICIO 10 =>   Tienes este array de proyectos con las horas que se han imputado cada día:
+/*EJERCICIO 10 => Tienes este array de proyectos con las horas que se han imputado cada día:
 
 const proyectos = [
     {nombre: "Web", horas: [8, 6, 10, 4]},
@@ -9303,7 +9303,7 @@ Resultado esperado: true
 d) ¿Todas las sucursales han tenido todos sus días con 6 pedidos o más? Retorna true o false usando un método de iteración avanzado.
 Resultado esperado: false (Vigo tuvo un día con 5)
 
- 
+
 
 const sucursales = [
     {nombre: "Madrid", pedidos: [12, 30, 25]},
@@ -9352,5 +9352,371 @@ const maspedidos = sucursales.every(surcursal =>
     surcursal.pedidos.every(h => h >= 6)
 );
 console.log(maspedidos); // false
+
+ */
+
+/*EJERCICIO 19 => Crea una función llamada “crearBorrador” que implemente el borrador de un correo usando un closure.
+
+La función principal (crearBorrador) NO DEBE recibir parámetros y debe retornar un objeto JSON con estos métodos:
+
+escribir(fragmento) => añade el fragmento de texto al final del borrador.
+deshacer() => elimina y retorna el último fragmento escrito. Si no hay ninguno retorna null.
+texto() => retorna todos los fragmentos unidos por un espacio, en un solo string. Si no hay ninguno retorna un string vacío "".
+cantidad() => retorna el número de fragmentos que hay.
+
+IMPORTANTE: El array interno NO debe ser accesible desde fuera.
+
+Ejemplo:
+const borrador = crearBorrador();
+borrador.escribir("Hola");
+borrador.escribir("equipo");
+borrador.escribir("!");
+console.log(borrador.texto()) // "Hola equipo !"
+console.log(borrador.deshacer()) // "!"
+console.log(borrador.texto()) // "Hola equipo"
+console.log(borrador.cantidad()) // 2
+
+borrador.deshacer();
+borrador.deshacer();
+console.log(borrador.deshacer()) // null
+console.log(borrador.texto()) // ""
+
+
+
+function crearBorrador(){
+    let borrador = [];
+
+    return {
+        escribir:function (fragmento){
+            borrador.push(fragmento);
+        },
+        deshacer:function (){
+            if(borrador.length===0){
+                return null;
+            }
+
+            return borrador.pop();
+
+
+        },
+        texto:function (){
+            if(borrador.length===0){
+                return " ";
+            }
+            return borrador.join(' ')
+        },
+        cantidad:function (){
+            return borrador.length;
+        }
+    }
+}
+const borrador = crearBorrador();
+borrador.escribir("Hola");
+borrador.escribir("equipo");
+borrador.escribir("!");
+console.log(borrador.texto()) // "Hola equipo !"
+console.log(borrador.deshacer()) // "!"
+console.log(borrador.texto()) // "Hola equipo"
+console.log(borrador.cantidad()) // 2
+
+borrador.deshacer();
+borrador.deshacer();
+console.log(borrador.deshacer()) // null
+console.log(borrador.texto()) // ""
+
+ */
+
+/*EJERCICIO 20 => Crea una clase llamada “Sala” con:
+
+constructor(nombre, capacidad). Guarda el nombre y la capacidad. Las entradas vendidas empiezan en 0. El historial empieza vacío.
+vender(cantidad) => Si con esta venta se superaría la capacidad, muestra por consola: “Entradas agotadas” y NO guardes nada en el historial. Si no, suma la cantidad a las vendidas y guarda en el historial:
+“Venta: +10 | Vendidas: 10”
+devolver(cantidad) => Si la cantidad es mayor que las vendidas, muestra por consola: “Devolución no válida” y NO guardes nada en el historial. Si no, resta la cantidad a las vendidas y guarda en el historial:
+“Devolución: -2 | Vendidas: 8”
+verHistorial() => imprime por consola cada movimiento del historial numerado:
+“1. Venta: +10 | Vendidas: 10”
+“2. Devolución: -2 | Vendidas: 8”
+“3. Venta: +2 | Vendidas: 10”
+get disponibles() => Getter que retorna cuántas entradas quedan por vender.
+get ocupacion() => Getter que retorna el porcentaje de entradas vendidas sobre la capacidad (redondeado a 2 decimales).
+
+
+
+class Sala {
+    constructor(nombre, capacidad) {
+        this.nombre = nombre;
+        this.capacidad = capacidad;
+        this.vendidas = 0; // Cambiado de 'venta' a 'vendidas' para mayor claridad
+        this.historial = [];
+    }
+
+    vender(cantidad) {
+        if (this.vendidas + cantidad > this.capacidad) {
+            console.log("Entradas agotadas");
+        } else {
+            this.vendidas += cantidad;
+            this.historial.push(`Venta: +${cantidad} | Vendidas: ${this.vendidas}`);
+        }
+    }
+
+    devolver(cantidad) {
+        if (cantidad > this.vendidas) {
+            console.log("Devolución no válida");
+        } else {
+            this.vendidas -= cantidad;
+            this.historial.push(`Devolución: -${cantidad} | Vendidas: ${this.vendidas}`);
+        }
+    }
+
+    verHistorial() {
+        this.historial.forEach((movimiento, i) => {
+            console.log(`${i + 1}. ${movimiento}`);
+        });
+    }
+
+    get disponibles() {
+        return this.capacidad - this.vendidas;
+    }
+
+    get ocupacion() {
+        let porcentaje = (this.vendidas / this.capacidad) * 100;
+        return porcentaje.toFixed(2);
+    }
+}
+
+// Pruebas
+const sala = new Sala("Sala 1", 50);
+sala.vender(10);
+sala.vender(45);            // Entradas agotadas (10 + 45 > 50)
+sala.devolver(2);
+sala.devolver(20);          // Devolución no válida (20 > 8)
+console.log(sala.disponibles);   // 42 (50 - 8)
+console.log(sala.ocupacion);     // 16.00 ((8 / 50) * 100)
+sala.vender(2);
+sala.verHistorial();
+
+ */
+
+/*#####################EJERCICIOS REDUCE###################################*/
+/*EJERCICIO 1 =>Escribe una función llamada “totalFactura” que reciba un array de líneas de factura y retorne el total: la suma de precio * cantidad de cada línea.
+const totalFactura=[
+    {precio: 10, cantidad: 2},
+    {precio: 5, cantidad: 3}
+]
+
+const filtro = totalFactura.reduce((acc,total) =>{
+    return acc +total.precio*total.cantidad;
+},0)
+console.log(filtro);
+ */
+
+/*EJERCICIO 2 =>Escribe una función llamada “mayorSalario” que reciba un array de empleados y retorne el nombre del empleado con el salario más alto. Si el array está vacío retorna null.
+
+Usa reduce()
+
+mayorSalario([
+    {nombre: "Ana", salario: 1800},
+    {nombre: "Luis", salario: 2500},
+    {nombre: "Eva", salario: 2200}
+]) -> "Luis"
+
+mayorSalario([]) -> null
+
+
+
+const mayorSalario=[
+    {nombre: "Ana", salario: 1800},
+    {nombre: "Luis", salario: 2500},
+    {nombre: "Eva", salario: 2200}
+]
+const filtro =
+    mayorSalario.reduce((acc,salario) => {
+        if(mayorSalario.length===0){
+            return null
+        }
+        if(acc>salario){
+            return acc;
+        }else {
+            return salario
+        }
+
+    },mayorSalario[0])
+
+console.log(filtro);
+
+
+ */
+
+/*EJERCICIO 3 => Escribe una función llamada “contarPorDepartamento” que reciba un array de empleados y retorne un objeto donde cada clave sea un departamento y su valor sea cuántos empleados tiene.
+
+Usa reduce() y el operador spread (...)
+
+contarPorDepartamento([
+    {nombre: "Ana", departamento: "Ventas"},
+    {nombre: "Luis", departamento: "IT"},
+    {nombre: "Eva", departamento: "IT"}
+
+
+
+function agrupar(contarPorDepartamento){
+    return contarPorDepartamento.reduce((acumulador,departamento)=>{
+        return {...acumulador, [departamento.departamento]:(acumulador[departamento.departamento] || 0) + 1 };
+    },{})
+}
+console.log(agrupar([ {nombre: "Ana", departamento: "Ventas"},
+    {nombre: "Luis", departamento: "IT"},
+    {nombre: "Eva", departamento: "IT"}]));
+console.log(agrupar([]))
+
+ */
+
+/*EJERCICIO 4 => Escribe una función llamada “indexarPorId” que reciba un array de productos y
+retorne un objeto donde cada clave sea el id del producto y su valor sea el producto completo.
+
+const indexarPorId =[
+    {id: 1, nombre: "Teclado"},
+    {id: 2, nombre: "Ratón"}
+]
+const porID = indexarPorId.reduce((acc,nombre) =>{
+    const id = nombre.id;
+    if(!acc[id]){
+        acc[id]=[]
+    }
+    acc[id].push(nombre);
+    return acc;
+},{})
+console.log(porID);
+
+ */
+
+/*################EJERCICIOS DE CLASES#################*/
+
+/*EJERCICIO 1 =>Crea una clase llamada “ContadorVisitas” con:
+
+constructor(pagina). Guarda el nombre de la página en this.pagina y las visitas en this.visitas, que empiezan en 0.
+registrar() => Suma 1 a las visitas.
+reiniciar() => Pone las visitas a 0 y retorna cuántas había antes de reiniciar.
+get total() => Getter que retorna las visitas.
+
+
+
+class ContadorVisitas{
+    constructor(pagina) {
+        this.pagina = pagina;
+        this.visitas =0
+    }
+    registrar(){
+        this.visitas++;
+    }
+    reiniciar(){
+        console.log(`Visitas antes de reiniciar=> ${this.visitas}`)
+        return this.visitas=0
+    }
+    get total(){
+        return this.visitas;
+    }
+}
+
+const v = new ContadorVisitas("inicio");
+v.registrar();
+v.registrar();
+v.registrar();
+console.log(v.total);        // 3
+console.log(v.reiniciar());  // 3
+console.log(v.total);        // 0
+
+ */
+
+/*EJERCICIO 2 => Crea una clase llamada “Empleado” con:
+
+constructor(nombre, salario). Guarda el nombre en this.nombre y el salario mensual en this.salario.
+subirSalario(porcentaje) => Si el porcentaje es 0 o menor, muestra por consola: “Porcentaje no válido” y NO cambies nada. Si no, sube el salario ese porcentaje (redondeado a 2 decimales).
+describir() => Retorna el string "<nombre> cobra <salario> €".
+get salarioAnual() => Getter que retorna el salario mensual multiplicado por 14 pagas.
+
+
+
+class Empleado {
+    constructor(nombre, salario) {
+        this.nombre = nombre;
+        this.salario = salario;
+    }
+    subirSalario(porcentaje){
+        if(porcentaje <=0){
+            console.log("Porcentaje no valido");
+        }else{
+            (this.salario *= porcentaje).toFixed(2);
+        }
+    }
+    describir(){
+        return `${this.nombre} cobra ${this.salario}`;
+    }
+
+    get salarioAnual(){
+        return this.salario*14;
+    }
+}
+
+const e = new Empleado("Ana", 1800);
+e.subirSalario(10);
+console.log(e.salario);         // 1980
+console.log(e.salarioAnual);    // 27720
+e.subirSalario(-5);             // Porcentaje no válido
+console.log(e.describir());     // "Ana cobra 1980 €"
+
+ */
+
+/*EJERCICIO 3 => Crea una clase llamada “ListaTareas” con:
+
+constructor(). Crea this.tareas, un array vacío. Cada tarea tiene la forma {titulo, hecha}.
+agregar(titulo) => Añade al final de this.tareas el objeto {titulo, hecha: false}.
+completar(titulo) => Si no existe ninguna tarea con ese título, muestra por consola: “Tarea no encontrada”. Si existe, pone su hecha a true.
+verTareas() => imprime por consola cada tarea numerada. Las hechas llevan [x] y las pendientes [ ]:
+“1. [ ] Llamar al cliente”
+“2. [x] Enviar factura”
+get pendientes() => Getter que retorna cuántas tareas no están hechas.
+
+
+
+class ListaTareas{
+    constructor(){
+        this.tareas = [];
+    }
+    agregar(titulo){
+        this.tareas.push({titulo, hecha:false});
+    }
+    completar(titulo){
+        if(this.tareas.titulo!==titulo){
+            console.log("Tarea no encontrada");
+        }else{
+            this.tareas.push({titulo, hecha:true});
+        }
+    }
+    verTareas(){
+        if(this.tareas.hecha!==false){
+            this.tareas.forEach((tarea,i) => {
+                console.log(`${i+1}. [x] ${tarea.titulo}`)
+            })
+        }
+        else {
+            this.tareas.forEach((tareas,i) => {
+                console.log(`${i+1}. [] ${tareas.titulo}`)
+            })
+        }
+    }
+    get pendientes(){
+        return this.tareas.hecha===false;
+    }
+}
+
+const lista = new ListaTareas();
+lista.agregar("Llamar al cliente");
+lista.agregar("Enviar factura");
+lista.completar("Enviar factura");
+lista.completar("Pagar");         // Tarea no encontrada
+console.log(lista.pendientes);    // 1
+lista.verTareas();
+// 1. [ ] Llamar al cliente
+// 2. [x] Enviar factura
 
  */
