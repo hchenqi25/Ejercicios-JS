@@ -499,23 +499,6 @@ console.log(nombresCadena);
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function crearEscuela() {
     let alumnos = [];
     let asignaturas = [];
